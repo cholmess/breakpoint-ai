@@ -45,3 +45,4 @@ def test_missing_cost_data_warns():
     )
     assert decision.status in {"WARN", "BLOCK"}
     assert "COST_WARN_MISSING_DATA" in decision.codes
+    assert "cost" in decision.details

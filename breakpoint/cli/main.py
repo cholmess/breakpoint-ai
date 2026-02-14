@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 
 from breakpoint.engine.evaluator import evaluate
 
@@ -10,10 +11,20 @@ def main() -> int:
 
     evaluate_parser = subparsers.add_parser("evaluate", help="Compare baseline and candidate.")
     evaluate_parser.add_argument("baseline_path", help="Path to baseline JSON input.")
-    evaluate_parser.add_argument("candidate_path", help="Path to candidate JSON input.")
+    evaluate_parser.add_argument(
+        "candidate_path",
+        nargs="?",
+        default=None,
+        help="Path to candidate JSON input. If omitted, baseline_path must contain {baseline:..., candidate:...}.",
+    )
     evaluate_parser.add_argument("--strict", action="store_true", help="Promote WARN to BLOCK.")
     evaluate_parser.add_argument("--config", help="Path to custom JSON config.")
     evaluate_parser.add_argument("--json", action="store_true", help="Emit JSON decision output.")
+    evaluate_parser.add_argument(
+        "--exit-codes",
+        action="store_true",
+        help="Return non-zero exit codes for WARN/BLOCK (useful for CI).",
+    )
 
     args = parser.parse_args()
     if args.command == "evaluate":
@@ -22,8 +33,13 @@ def main() -> int:
 
 
 def _run_evaluate(args: argparse.Namespace) -> int:
-    baseline_data = _read_json(args.baseline_path)
-    candidate_data = _read_json(args.candidate_path)
+    stdin_cache: dict[str, str] = {}
+    if args.candidate_path is None:
+        payload = _read_json(args.baseline_path, stdin_cache)
+        baseline_data, candidate_data = _split_combined_input(payload)
+    else:
+        baseline_data = _read_json(args.baseline_path, stdin_cache)
+        candidate_data = _read_json(args.candidate_path, stdin_cache)
 
     decision = evaluate(
         baseline=baseline_data,
@@ -44,17 +60,41 @@ def _run_evaluate(args: argparse.Namespace) -> int:
                 indent=2,
             )
         )
-        return 0
+        return _exit_code(decision.status) if args.exit_codes else 0
 
     print(f"STATUS: {decision.status}")
     for reason in decision.reasons:
         print(f"- {reason}")
-    return 0
+    return _exit_code(decision.status) if args.exit_codes else 0
 
 
-def _read_json(path: str) -> dict:
+def _read_json(path: str, stdin_cache: dict[str, str]) -> dict:
+    if path == "-":
+        if "stdin" not in stdin_cache:
+            stdin_cache["stdin"] = sys.stdin.read()
+        return json.loads(stdin_cache["stdin"])
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _split_combined_input(payload: dict) -> tuple[dict, dict]:
+    if not isinstance(payload, dict):
+        raise ValueError("Combined input must be a JSON object.")
+    baseline = payload.get("baseline")
+    candidate = payload.get("candidate")
+    if not isinstance(baseline, dict) or not isinstance(candidate, dict):
+        raise ValueError("Combined input must contain object keys 'baseline' and 'candidate'.")
+    return baseline, candidate
+
+
+def _exit_code(status: str) -> int:
+    if status == "ALLOW":
+        return 0
+    if status == "WARN":
+        return 2
+    if status == "BLOCK":
+        return 3
+    return 1
 
 
 if __name__ == "__main__":

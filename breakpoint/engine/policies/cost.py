@@ -9,6 +9,7 @@ def evaluate_cost_policy(
 
     if baseline_cost is None or candidate_cost is None:
         return PolicyResult(
+            policy="cost",
             status="WARN",
             reasons=["Insufficient cost data; unable to compute full cost delta."],
             codes=["COST_WARN_MISSING_DATA"],
@@ -16,6 +17,7 @@ def evaluate_cost_policy(
 
     if baseline_cost <= 0:
         return PolicyResult(
+            policy="cost",
             status="WARN",
             reasons=["Baseline cost is zero or negative; cost delta is unreliable."],
             codes=["COST_WARN_INVALID_BASELINE"],
@@ -27,6 +29,7 @@ def evaluate_cost_policy(
 
     if increase_pct > block_threshold:
         return PolicyResult(
+            policy="cost",
             status="BLOCK",
             reasons=[f"Cost increased by {increase_pct:.1f}% (>{block_threshold:.0f}%)."],
             codes=["COST_BLOCK_INCREASE"],
@@ -34,12 +37,13 @@ def evaluate_cost_policy(
         )
     if increase_pct > warn_threshold:
         return PolicyResult(
+            policy="cost",
             status="WARN",
             reasons=[f"Cost increased by {increase_pct:.1f}% (>{warn_threshold:.0f}%)."],
             codes=["COST_WARN_INCREASE"],
             details={"increase_pct": increase_pct},
         )
-    return PolicyResult(status="ALLOW")
+    return PolicyResult(policy="cost", status="ALLOW")
 
 
 def _resolve_cost(record: dict, pricing: dict) -> float | None:

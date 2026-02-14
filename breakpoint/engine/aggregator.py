@@ -16,8 +16,7 @@ def aggregate_policy_results(results: list[PolicyResult], strict: bool = False) 
             has_block = True
         elif result.status == "WARN":
             has_warn = True
-        if result.details:
-            details.update(result.details)
+        details[result.policy] = result.details or {}
 
     if has_block:
         status = "BLOCK"

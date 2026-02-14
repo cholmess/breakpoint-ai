@@ -9,6 +9,7 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
 
     if not candidate_text.strip():
         return PolicyResult(
+            policy="drift",
             status="BLOCK",
             reasons=["Candidate output is empty."],
             codes=["DRIFT_BLOCK_EMPTY"],
@@ -50,8 +51,8 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
             codes.append("DRIFT_WARN_LOW_SIMILARITY")
 
     if reasons:
-        return PolicyResult(status="WARN", reasons=reasons, codes=codes, details=details)
-    return PolicyResult(status="ALLOW", details=details)
+        return PolicyResult(policy="drift", status="WARN", reasons=reasons, codes=codes, details=details)
+    return PolicyResult(policy="drift", status="ALLOW", details=details)
 
 
 def _token_overlap_similarity(left: str, right: str) -> float:

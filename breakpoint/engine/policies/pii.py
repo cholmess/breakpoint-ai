@@ -20,11 +20,12 @@ def evaluate_pii_policy(candidate: dict, patterns: dict, allowlist: list[str]) -
 
     if blocked_patterns:
         return PolicyResult(
+            policy="pii",
             status="BLOCK",
             reasons=[f"PII detected: {', '.join(blocked_patterns)}."],
             codes=[f"PII_BLOCK_{name}" for name in blocked_patterns],
         )
-    return PolicyResult(status="ALLOW")
+    return PolicyResult(policy="pii", status="ALLOW")
 
 
 def _is_allowlisted(text: str, regex: re.Pattern, allowlist: list[re.Pattern]) -> bool:
