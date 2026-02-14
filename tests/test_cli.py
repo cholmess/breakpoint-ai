@@ -76,7 +76,7 @@ def test_cli_exit_codes_enabled(tmp_path):
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 2
+    assert result.returncode == 1
 
 
 def test_cli_combined_input_single_file(tmp_path):
@@ -97,7 +97,7 @@ def test_cli_combined_input_single_file(tmp_path):
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 2
+    assert result.returncode == 1
 
 
 def test_cli_stdin_input(tmp_path):
@@ -121,7 +121,7 @@ def test_cli_stdin_input(tmp_path):
         text=True,
     )
 
-    assert result.returncode == 2
+    assert result.returncode == 1
     payload = json.loads(result.stdout)
     assert payload["status"] == "WARN"
     assert "reason_codes" in payload
@@ -150,6 +150,81 @@ def test_cli_json_validation_error_contract(tmp_path):
     assert payload["schema_version"] == "1.0.0"
     assert payload["status"] == "BLOCK"
     assert payload["reason_codes"] == ["INPUT_VALIDATION_ERROR"]
+
+
+def test_cli_fail_on_block_does_not_fail_warn(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.0}), encoding="utf-8")
+    candidate_path.write_text(json.dumps({"output": "hello world", "cost_usd": 1.25}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            str(candidate_path),
+            "--fail-on",
+            "block",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+
+
+def test_cli_fail_on_block_fails_block(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.0}), encoding="utf-8")
+    candidate_path.write_text(
+        json.dumps({"output": "contact me at hi@example.com", "cost_usd": 1.0}),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            str(candidate_path),
+            "--fail-on",
+            "block",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+
+
+def test_cli_fail_on_warn_fails_warn(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.0}), encoding="utf-8")
+    candidate_path.write_text(json.dumps({"output": "hello world", "cost_usd": 1.25}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            str(candidate_path),
+            "--fail-on",
+            "warn",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
 
 
 def test_cli_config_print_outputs_json():

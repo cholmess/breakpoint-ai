@@ -26,6 +26,11 @@ def main() -> int:
         action="store_true",
         help="Return non-zero exit codes for WARN/BLOCK (useful for CI).",
     )
+    evaluate_parser.add_argument(
+        "--fail-on",
+        choices=["warn", "block"],
+        help="Return non-zero based on threshold: warn fails on WARN/BLOCK, block fails only on BLOCK.",
+    )
 
     config_parser = subparsers.add_parser("config", help="Inspect BreakPoint configuration.")
     config_subparsers = config_parser.add_subparsers(dest="config_command", required=True)
@@ -80,12 +85,20 @@ def _run_evaluate(args: argparse.Namespace) -> int:
 
     if args.json:
         print(json.dumps(decision.to_dict(), indent=2))
-        return _exit_code(decision.status) if args.exit_codes else 0
+        return _result_exit_code(
+            status=decision.status,
+            exit_codes_enabled=args.exit_codes,
+            fail_on=args.fail_on,
+        )
 
     print(f"STATUS: {decision.status}")
     for reason in decision.reasons:
         print(f"- {reason}")
-    return _exit_code(decision.status) if args.exit_codes else 0
+    return _result_exit_code(
+        status=decision.status,
+        exit_codes_enabled=args.exit_codes,
+        fail_on=args.fail_on,
+    )
 
 
 def _run_config_print(args: argparse.Namespace) -> int:
@@ -120,10 +133,25 @@ def _exit_code(status: str) -> int:
     if status == "ALLOW":
         return 0
     if status == "WARN":
-        return 2
+        return 1
     if status == "BLOCK":
-        return 3
-    return 1
+        return 2
+    return 2
+
+
+def _result_exit_code(status: str, exit_codes_enabled: bool, fail_on: str | None) -> int:
+    threshold = fail_on
+    if threshold is None and exit_codes_enabled:
+        threshold = "warn"
+    if threshold is None:
+        return 0
+
+    normalized = status.upper()
+    if threshold == "warn":
+        return _exit_code(normalized) if normalized in {"WARN", "BLOCK"} else 0
+    if threshold == "block":
+        return _exit_code(normalized) if normalized == "BLOCK" else 0
+    return 0
 
 
 if __name__ == "__main__":

@@ -124,6 +124,11 @@ Error response contract (CLI JSON mode):
 
 This mapping is part of the CI gate contract and must be treated as stable once released.
 
+CLI failure policy:
+- `--exit-codes`: equivalent to `--fail-on warn` for backward compatibility.
+- `--fail-on warn`: non-zero on `WARN` and `BLOCK`.
+- `--fail-on block`: non-zero only on `BLOCK`.
+
 ## Backward Compatibility
 
 - New optional fields may be added in minor versions.
