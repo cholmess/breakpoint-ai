@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "breakpoint-library"
+version = "0.1.0"
+description = "Local-first decision engine for baseline vs candidate LLM output checks."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[project.scripts]
+breakpoint = "breakpoint.cli.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["breakpoint*"]
