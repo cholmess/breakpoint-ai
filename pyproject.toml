@@ -19,6 +19,9 @@ breakpoint = "breakpoint.cli.main:main"
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.package-data]
+"breakpoint.config" = ["*.json"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["breakpoint*"]
