@@ -7,7 +7,8 @@ def test_cost_warn_on_increase():
         candidate={"output": "same", "cost_usd": 1.24},
     )
     assert decision.status == "WARN"
-    assert "COST_WARN_INCREASE" in decision.codes
+    assert decision.schema_version == "1.0.0"
+    assert "COST_INCREASE_WARN" in decision.reason_codes
 
 
 def test_pii_blocks_email():
@@ -16,7 +17,7 @@ def test_pii_blocks_email():
         candidate={"output": "contact me at hi@example.com", "cost_usd": 1.0},
     )
     assert decision.status == "BLOCK"
-    assert "PII_BLOCK_EMAIL" in decision.codes
+    assert "PII_EMAIL_BLOCK" in decision.reason_codes
 
 
 def test_pii_credit_card_uses_luhn_check():
@@ -25,13 +26,13 @@ def test_pii_credit_card_uses_luhn_check():
         candidate={"output": "test 4111 1111 1111 1111", "cost_usd": 1.0},
     )
     assert decision.status == "BLOCK"
-    assert "PII_BLOCK_CREDIT_CARD" in decision.codes
+    assert "PII_CREDIT_CARD_BLOCK" in decision.reason_codes
 
     not_a_card = evaluate(
         baseline={"output": "hello"},
         candidate={"output": "test 4111 1111 1111 1112", "cost_usd": 1.0},
     )
-    assert "PII_BLOCK_CREDIT_CARD" not in not_a_card.codes
+    assert "PII_CREDIT_CARD_BLOCK" not in not_a_card.reason_codes
 
 
 def test_drift_blocks_empty_candidate():
@@ -40,7 +41,7 @@ def test_drift_blocks_empty_candidate():
         candidate={"output": "  ", "cost_usd": 1.0},
     )
     assert decision.status == "BLOCK"
-    assert "DRIFT_BLOCK_EMPTY" in decision.codes
+    assert "DRIFT_EMPTY_OUTPUT_WARN" in decision.reason_codes
 
 
 def test_strict_promotes_warn_to_block():
@@ -50,7 +51,7 @@ def test_strict_promotes_warn_to_block():
         strict=True,
     )
     assert decision.status == "BLOCK"
-    assert "STRICT_PROMOTED_WARN" in decision.codes
+    assert "STRICT_MODE_PROMOTION_BLOCK" in decision.reason_codes
 
 
 def test_missing_cost_data_warns():
@@ -59,7 +60,7 @@ def test_missing_cost_data_warns():
         candidate={"output": "hello there"},
     )
     assert decision.status in {"WARN", "BLOCK"}
-    assert "COST_WARN_MISSING_DATA" in decision.codes
+    assert "COST_WARN_MISSING_DATA" in decision.reason_codes
     assert "cost" in decision.details
 
 
@@ -69,7 +70,7 @@ def test_cost_low_baseline_warns():
         candidate={"output": "hello", "cost_usd": 0.0003},
     )
     assert decision.status == "WARN"
-    assert "COST_WARN_LOW_BASELINE" in decision.codes
+    assert "COST_WARN_LOW_BASELINE" in decision.reason_codes
 
 
 def test_latency_warn_on_increase():
@@ -78,7 +79,8 @@ def test_latency_warn_on_increase():
         candidate={"output": "same", "cost_usd": 1.0, "latency_ms": 140},
     )
     assert decision.status == "WARN"
-    assert "LATENCY_WARN_INCREASE" in decision.codes
+    assert "LATENCY_INCREASE_WARN" in decision.reason_codes
+    assert decision.metrics["latency_delta_pct"] == 40.0
 
 
 def test_latency_blocks_on_large_increase():
@@ -87,7 +89,7 @@ def test_latency_blocks_on_large_increase():
         candidate={"output": "same", "cost_usd": 1.0, "latency_ms": 200},
     )
     assert decision.status == "BLOCK"
-    assert "LATENCY_BLOCK_INCREASE" in decision.codes
+    assert "LATENCY_INCREASE_BLOCK" in decision.reason_codes
 
 
 def test_latency_missing_data_warns():
@@ -96,7 +98,7 @@ def test_latency_missing_data_warns():
         candidate={"output": "same", "cost_usd": 1.0},
     )
     assert decision.status == "WARN"
-    assert "LATENCY_WARN_MISSING_DATA" in decision.codes
+    assert "LATENCY_WARN_MISSING_DATA" in decision.reason_codes
 
 
 def test_latency_metadata_mapping():
@@ -106,4 +108,4 @@ def test_latency_metadata_mapping():
         metadata={"baseline_latency_ms": 100, "candidate_latency_ms": 140},
     )
     assert decision.status == "WARN"
-    assert "LATENCY_WARN_INCREASE" in decision.codes
+    assert "LATENCY_INCREASE_WARN" in decision.reason_codes

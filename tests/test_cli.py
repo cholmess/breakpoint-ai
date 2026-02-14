@@ -26,8 +26,9 @@ def test_cli_evaluate_json_output(tmp_path):
 
     assert result.returncode == 0
     payload = json.loads(result.stdout)
+    assert payload["schema_version"] == "1.0.0"
     assert payload["status"] == "WARN"
-    assert "COST_WARN_INCREASE" in payload["codes"]
+    assert "COST_INCREASE_WARN" in payload["reason_codes"]
 
 
 def test_cli_strict_blocks(tmp_path):
@@ -123,6 +124,32 @@ def test_cli_stdin_input(tmp_path):
     assert result.returncode == 2
     payload = json.loads(result.stdout)
     assert payload["status"] == "WARN"
+    assert "reason_codes" in payload
+
+
+def test_cli_json_validation_error_contract(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text(json.dumps({"output": "hello"}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            "--json",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert payload["schema_version"] == "1.0.0"
+    assert payload["status"] == "BLOCK"
+    assert payload["reason_codes"] == ["INPUT_VALIDATION_ERROR"]
 
 
 def test_cli_config_print_outputs_json():

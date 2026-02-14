@@ -49,7 +49,17 @@ def evaluate(
         ),
     ]
 
-    return aggregate_policy_results(policy_results, strict=strict)
+    aggregated = aggregate_policy_results(policy_results, strict=strict)
+    metadata_payload = _decision_metadata(baseline_record, candidate_record, strict)
+    return Decision(
+        schema_version=aggregated.schema_version,
+        status=aggregated.status,
+        reasons=aggregated.reasons,
+        reason_codes=aggregated.reason_codes,
+        metrics=aggregated.metrics,
+        metadata=metadata_payload,
+        details=aggregated.details,
+    )
 
 
 def _normalize_inputs(
@@ -100,3 +110,14 @@ def _apply_metadata_overrides(baseline: dict, candidate: dict, metadata: dict) -
         target = baseline if side == "baseline" else candidate
         if field_name not in target:
             target[field_name] = value
+
+
+def _decision_metadata(baseline: dict, candidate: dict, strict: bool) -> dict:
+    metadata = {"strict": strict}
+
+    if isinstance(baseline.get("model"), str):
+        metadata["baseline_model"] = baseline["model"]
+    if isinstance(candidate.get("model"), str):
+        metadata["candidate_model"] = candidate["model"]
+
+    return metadata

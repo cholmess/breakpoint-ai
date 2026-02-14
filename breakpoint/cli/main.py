@@ -46,33 +46,40 @@ def main() -> int:
 
 
 def _run_evaluate(args: argparse.Namespace) -> int:
-    stdin_cache: dict[str, str] = {}
-    if args.candidate_path is None:
-        payload = _read_json(args.baseline_path, stdin_cache)
-        baseline_data, candidate_data = _split_combined_input(payload)
-    else:
-        baseline_data = _read_json(args.baseline_path, stdin_cache)
-        candidate_data = _read_json(args.candidate_path, stdin_cache)
+    try:
+        stdin_cache: dict[str, str] = {}
+        if args.candidate_path is None:
+            payload = _read_json(args.baseline_path, stdin_cache)
+            baseline_data, candidate_data = _split_combined_input(payload)
+        else:
+            baseline_data = _read_json(args.baseline_path, stdin_cache)
+            candidate_data = _read_json(args.candidate_path, stdin_cache)
 
-    decision = evaluate(
-        baseline=baseline_data,
-        candidate=candidate_data,
-        strict=args.strict,
-        config_path=args.config,
-    )
+        decision = evaluate(
+            baseline=baseline_data,
+            candidate=candidate_data,
+            strict=args.strict,
+            config_path=args.config,
+        )
+    except Exception as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "schema_version": "1.0.0",
+                        "status": "BLOCK",
+                        "reasons": [str(exc)],
+                        "reason_codes": ["INPUT_VALIDATION_ERROR"],
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
     if args.json:
-        print(
-            json.dumps(
-                {
-                    "status": decision.status,
-                    "reasons": decision.reasons,
-                    "codes": decision.codes,
-                    "details": decision.details,
-                },
-                indent=2,
-            )
-        )
+        print(json.dumps(decision.to_dict(), indent=2))
         return _exit_code(decision.status) if args.exit_codes else 0
 
     print(f"STATUS: {decision.status}")
