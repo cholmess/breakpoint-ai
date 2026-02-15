@@ -16,6 +16,19 @@ Outcome metrics (requires human/system feedback):
 - `false_positive_rate`: fraction of WARN/BLOCK later judged safe
 - `true_positive_rate`: fraction of BLOCK that prevented a bad deploy
 
+## Default Threshold Tuning (2026-02-15)
+
+Current default drift thresholds were tuned to reduce noisy WARNs while preserving high-signal regressions:
+
+- `warn_length_delta_pct`: `75` (was `60`)
+- `warn_short_ratio`: `0.30` (was `0.35`)
+- `warn_min_similarity`: `0.10` (was `0.15`)
+
+Rationale:
+- Moderate length variation alone should not dominate decisions in normal prompt iteration.
+- Severe drift, contract breaks, PII, cost spikes, and latency spikes still trigger as before.
+- Teams can tighten thresholds via presets or project config when workflows need stricter guards.
+
 ## Store Decision Artifacts
 
 In CI, always save the decision JSON artifact (example: `breakpoint-decision.json`).

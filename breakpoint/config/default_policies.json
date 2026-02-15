@@ -22,9 +22,9 @@
     "warn_on_type_mismatch": true
   },
   "drift_policy": {
-    "warn_length_delta_pct": 60,
-    "warn_short_ratio": 0.35,
-    "warn_min_similarity": 0.15,
+    "warn_length_delta_pct": 75,
+    "warn_short_ratio": 0.30,
+    "warn_min_similarity": 0.10,
     "semantic_check_enabled": true,
     "similarity_method": "max(token_jaccard,char_3gram_jaccard)"
   },

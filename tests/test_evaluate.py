@@ -147,6 +147,14 @@ def test_output_contract_warns_on_type_mismatch():
     assert decision.metrics["output_contract_type_mismatch_count"] == 1
 
 
+def test_default_drift_tuning_reduces_moderate_length_noise():
+    decision = evaluate(
+        baseline={"output": "a" * 100, "cost_usd": 1.0, "latency_ms": 100},
+        candidate={"output": "a" * 165, "cost_usd": 1.0, "latency_ms": 100},
+    )
+    assert decision.status == "ALLOW"
+
+
 def test_environment_override_changes_thresholds(tmp_path):
     config_path = tmp_path / "policy.json"
     config_path.write_text(
