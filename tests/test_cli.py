@@ -183,6 +183,19 @@ def test_cli_empty_candidate_marks_drift_as_block(tmp_path):
     assert "✗ Output drift:" in result.stdout
 
 
+def test_cli_block_summary_lists_all_blocking_reasons():
+    result = _run_evaluate_text(
+        "examples/quickstart/baseline.json",
+        "examples/quickstart/candidate_block.json",
+    )
+
+    assert result.returncode == 0
+    assert "- Cost increased by 40.0% (>35%)." in result.stdout
+    assert "- Latency increased by 70.0% (>60%)." in result.stdout
+    assert "- PII detected: EMAIL(1). Total matches: 1." in result.stdout
+    assert "1 additional non-blocking signal(s) detected." in result.stdout
+
+
 def test_cli_decision_header_by_status():
     allow_result = _run_evaluate_text(
         "examples/quickstart/baseline.json",

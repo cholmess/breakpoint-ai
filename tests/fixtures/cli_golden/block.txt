@@ -12,8 +12,8 @@ Policy Results:
 ⚠ Output drift: Compression ratio 0.271429.
 
 Summary:
-Output contract break: candidate output is not valid JSON.
-2 additional signal(s) detected.
+- Output contract break: candidate output is not valid JSON.
+2 additional non-blocking signal(s) detected.
 
 Exit Code: 0
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

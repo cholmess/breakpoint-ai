@@ -286,9 +286,22 @@ def _print_text_decision(decision, exit_code: int) -> None:
     print()
     print("Summary:")
     if decision.reasons:
-        print(decision.reasons[0])
-        if len(decision.reasons) > 1:
-            print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
+        if decision.status.upper() == "BLOCK":
+            block_reasons = _reasons_with_severity(decision.reasons, decision.reason_codes, "BLOCK")
+            if block_reasons:
+                for reason in block_reasons:
+                    print(f"- {reason}")
+                non_block_count = len(decision.reasons) - len(block_reasons)
+                if non_block_count > 0:
+                    print(f"{non_block_count} additional non-blocking signal(s) detected.")
+            else:
+                print(decision.reasons[0])
+                if len(decision.reasons) > 1:
+                    print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
+        else:
+            print(decision.reasons[0])
+            if len(decision.reasons) > 1:
+                print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
     else:
         print("No risky deltas detected against configured policies.")
     print()
@@ -344,6 +357,15 @@ def _severity_from_reason_code(code: str) -> str:
     if code.endswith("_WARN"):
         return "WARN"
     return "ALLOW"
+
+
+def _reasons_with_severity(reasons: list[str], reason_codes: list[str], severity: str) -> list[str]:
+    matching: list[str] = []
+    for index, reason in enumerate(reasons):
+        code = reason_codes[index] if index < len(reason_codes) else ""
+        if _severity_from_reason_code(code) == severity:
+            matching.append(reason)
+    return matching
 
 
 def _policy_detail(policy: str, status: str, metrics: dict) -> str:
