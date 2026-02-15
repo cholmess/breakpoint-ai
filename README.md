@@ -67,6 +67,9 @@ Baseline lifecycle guidance:
 CI templates:
 - `docs/ci-templates.md`
 
+Value metrics:
+- `docs/value-metrics.md`
+
 ## Input schema
 
 Each input JSON is an object with at least:

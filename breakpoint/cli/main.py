@@ -4,6 +4,7 @@ import sys
 
 from breakpoint.engine.errors import ConfigValidationError
 from breakpoint.engine.config import load_config
+from breakpoint.engine.metrics import summarize_decisions
 from breakpoint.engine.evaluator import evaluate
 
 
@@ -49,11 +50,25 @@ def main() -> int:
         help="Emit compact JSON (no indentation).",
     )
 
+    metrics_parser = subparsers.add_parser("metrics", help="Compute metrics from decision JSON artifacts.")
+    metrics_subparsers = metrics_parser.add_subparsers(dest="metrics_command", required=True)
+    metrics_summarize_parser = metrics_subparsers.add_parser(
+        "summarize", help="Summarize ALLOW/WARN/BLOCK counts and reason codes from decision JSON files."
+    )
+    metrics_summarize_parser.add_argument(
+        "paths",
+        nargs="+",
+        help="One or more JSON files or directories (directories are scanned recursively for *.json). Use '-' for stdin.",
+    )
+    metrics_summarize_parser.add_argument("--json", action="store_true", help="Emit summary as JSON.")
+
     args = parser.parse_args()
     if args.command == "evaluate":
         return _run_evaluate(args)
     if args.command == "config" and args.config_command == "print":
         return _run_config_print(args)
+    if args.command == "metrics" and args.metrics_command == "summarize":
+        return _run_metrics_summarize(args)
     return 1
 
 
@@ -117,6 +132,39 @@ def _run_config_print(args: argparse.Namespace) -> int:
         print(json.dumps(config, sort_keys=True))
     else:
         print(json.dumps(config, indent=2, sort_keys=True))
+    return 0
+
+
+def _run_metrics_summarize(args: argparse.Namespace) -> int:
+    try:
+        summary = summarize_decisions(list(args.paths))
+    except Exception as exc:
+        if args.json:
+            print(json.dumps({"error": str(exc)}, indent=2))
+        else:
+            print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(summary.to_dict(), indent=2, sort_keys=True))
+        return 0
+
+    payload = summary.to_dict()
+    print(f"TOTAL: {payload['total']}")
+    print("STATUS_COUNTS:")
+    for key in sorted(payload["by_status"].keys()):
+        print(f"- {key}: {payload['by_status'][key]}")
+    print("TOP_REASON_CODES:")
+    items = sorted(payload["reason_code_counts"].items(), key=lambda kv: (-kv[1], kv[0]))
+    for code, count in items[:20]:
+        print(f"- {code}: {count}")
+    if payload["waivers_applied_total"] > 0:
+        print(f"WAIVERS_APPLIED_TOTAL: {payload['waivers_applied_total']}")
+        waived = sorted(payload["waived_reason_code_counts"].items(), key=lambda kv: (-kv[1], kv[0]))
+        if waived:
+            print("TOP_WAIVED_REASON_CODES:")
+            for code, count in waived[:20]:
+                print(f"- {code}: {count}")
     return 0
 
 

@@ -212,7 +212,9 @@ P0-5 — 10-Minute Quickstart
 - Completed: P0-4 Policy Calibration
 - Completed: P0-5 10-Minute Quickstart
 - Completed: P1-0 CI templates (GitHub Actions + shell example)
-- Next focus: P1 waivers/suppressions with expiration + reason
+- Completed: P1-1 waivers/suppressions (expiration + audit fields)
+- Completed: P1-2 value metrics (metrics summarize + docs)
+- Next focus: P1 policy presets by use case
 
 ### P1 (High-value after P0)
 - Built-in CI templates (GitHub Actions + generic shell example)
