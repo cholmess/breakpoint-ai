@@ -108,6 +108,7 @@ def _validate_config(config: dict) -> None:
     _validate_policy_thresholds(config, policy="latency_policy")
     _validate_drift_thresholds(config)
     _validate_output_contract_policy(config)
+    _validate_strict_mode(config)
     parse_waivers(config.get("waivers"))
 
 
@@ -176,3 +177,12 @@ def _validate_output_contract_policy(config: dict) -> None:
         value = policy.get(key)
         if not isinstance(value, bool):
             raise ConfigValidationError(f"Config key 'output_contract_policy.{key}' must be boolean.")
+
+
+def _validate_strict_mode(config: dict) -> None:
+    policy = config.get("strict_mode", {})
+    if not isinstance(policy, dict):
+        raise ConfigValidationError("Config key 'strict_mode' must be a JSON object.")
+    enabled = policy.get("enabled", False)
+    if not isinstance(enabled, bool):
+        raise ConfigValidationError("Config key 'strict_mode.enabled' must be boolean.")

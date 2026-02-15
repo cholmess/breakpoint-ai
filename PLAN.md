@@ -106,33 +106,33 @@ BreakPoint is a local decision engine that tells developers whether an AI change
 
 ## Phase 1: Policy and CLI Boundary Enforcement
 
-- [ ] Add mode-aware policy loading so Lite only evaluates cost/pii/basic_drift.
-- [ ] Gate Full-only flags/options behind `--mode full` with clear errors.
-- [ ] Add/confirm `--accept-risk <named-risk>` behavior for Lite one-shot overrides.
-- [ ] Add/confirm `--strict` in Lite as non-persistent behavior.
-- [ ] Ensure no Lite path writes waiver/config artifacts.
+- [x] Add mode-aware policy loading so Lite only evaluates cost/pii/basic_drift.
+- [x] Gate Full-only flags/options behind `--mode full` with clear errors.
+- [x] Add/confirm `--accept-risk <named-risk>` behavior for Lite one-shot overrides.
+- [x] Add/confirm `--strict` in Lite as non-persistent behavior.
+- [x] Ensure no Lite path writes waiver/config artifacts.
 
 ## Phase 2: Threshold Alignment
 
-- [ ] Update Lite cost thresholds to `WARN +20`, `BLOCK +40`.
-- [ ] Update Lite drift thresholds to `WARN +35`, `BLOCK +70`.
-- [ ] Enforce Lite empty-output `BLOCK`.
-- [ ] Enforce Lite PII immediate `BLOCK` on first email/phone/credit card match.
+- [x] Update Lite cost thresholds to `WARN +20`, `BLOCK +40`.
+- [x] Update Lite drift thresholds to `WARN +35`, `BLOCK +70`.
+- [x] Enforce Lite empty-output `BLOCK`.
+- [x] Enforce Lite PII immediate `BLOCK` on first email/phone/credit card match.
 
 ## Phase 3: UX and Messaging
 
-- [ ] Show explicit mode in CLI output (`Mode: lite|full`).
-- [ ] Show explicit override acknowledgment in terminal output when used.
-- [ ] Ensure decision summary language stays deterministic and calm.
-- [ ] Keep Full mode visible but secondary in README and quickstart.
+- [x] Show explicit mode in CLI output (`Mode: lite|full`).
+- [x] Show explicit override acknowledgment in terminal output when used.
+- [x] Ensure decision summary language stays deterministic and calm.
+- [x] Keep Full mode visible but secondary in README and quickstart.
 
 ## Phase 4: Validation and Release Readiness
 
-- [ ] Add tests for Lite/Full feature gating.
-- [ ] Add tests for finalized Lite thresholds and empty-output block rule.
-- [ ] Add tests for `--accept-risk` explicit naming and one-shot behavior.
-- [ ] Add tests proving no persistent artifacts in Lite override flow.
-- [ ] Add test coverage for `--strict` in Lite and config strict in Full.
+- [x] Add tests for Lite/Full feature gating.
+- [x] Add tests for finalized Lite thresholds and empty-output block rule.
+- [x] Add tests for `--accept-risk` explicit naming and one-shot behavior.
+- [x] Add tests proving no persistent artifacts in Lite override flow.
+- [x] Add test coverage for `--strict` in Lite and config strict in Full.
 
 ## KPI Instrumentation Plan (30 Days)
 

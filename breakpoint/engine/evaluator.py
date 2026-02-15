@@ -29,6 +29,9 @@ def evaluate(
 ) -> Decision:
     normalized_mode = _normalize_mode(mode)
     config = load_config(config_path, environment=config_environment, preset=preset)
+    strict_effective = bool(strict)
+    if normalized_mode == "full":
+        strict_effective = strict_effective or bool(config.get("strict_mode", {}).get("enabled", False))
     metadata_input = metadata or {}
     baseline_record, candidate_record = _normalize_inputs(
         baseline_output=baseline_output,
@@ -91,11 +94,11 @@ def evaluate(
     if normalized_mode == "lite":
         policy_results = _apply_accepted_risks(policy_results, accepted_risks)
 
-    aggregated = aggregate_policy_results(policy_results, strict=strict)
+    aggregated = aggregate_policy_results(policy_results, strict=strict_effective)
     metadata_payload = _decision_metadata(
         baseline_record,
         candidate_record,
-        strict,
+        strict_effective,
         applied_waivers,
         mode=normalized_mode,
     )

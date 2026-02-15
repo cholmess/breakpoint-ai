@@ -15,6 +15,22 @@ def test_cost_warn_on_increase():
     assert "COST_INCREASE_WARN" in decision.reason_codes
 
 
+def test_cost_threshold_boundaries_in_lite_defaults():
+    warn = evaluate(
+        baseline={"output": "same output", "cost_usd": 1.0},
+        candidate={"output": "same output", "cost_usd": 1.2},
+    )
+    assert warn.status == "WARN"
+    assert "COST_INCREASE_WARN" in warn.reason_codes
+
+    block = evaluate(
+        baseline={"output": "same output", "cost_usd": 1.0},
+        candidate={"output": "same output", "cost_usd": 1.4},
+    )
+    assert block.status == "BLOCK"
+    assert "COST_INCREASE_BLOCK" in block.reason_codes
+
+
 def test_pii_blocks_email():
     decision = evaluate(
         baseline={"output": "hello"},
@@ -48,6 +64,22 @@ def test_drift_blocks_empty_candidate():
     )
     assert decision.status == "BLOCK"
     assert "DRIFT_EMPTY_OUTPUT_BLOCK" in decision.reason_codes
+
+
+def test_drift_length_threshold_boundaries_in_lite_defaults():
+    warn = evaluate(
+        baseline={"output": "a" * 100, "cost_usd": 1.0},
+        candidate={"output": "a" * 135, "cost_usd": 1.0},
+    )
+    assert warn.status == "WARN"
+    assert "DRIFT_LENGTH_WARN" in warn.reason_codes
+
+    block = evaluate(
+        baseline={"output": "a" * 100, "cost_usd": 1.0},
+        candidate={"output": "a" * 170, "cost_usd": 1.0},
+    )
+    assert block.status == "BLOCK"
+    assert "DRIFT_LENGTH_BLOCK" in block.reason_codes
 
 
 def test_strict_promotes_warn_to_block():
@@ -194,6 +226,28 @@ def test_environment_override_changes_thresholds(tmp_path):
         mode="full",
     )
     assert prod_decision.status == "ALLOW"
+
+
+def test_full_mode_config_strict_promotes_warn_to_block(tmp_path):
+    config_path = tmp_path / "policy.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "strict_mode": {"enabled": True},
+                "cost_policy": {"warn_increase_pct": 20, "block_increase_pct": 40},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    decision = evaluate(
+        baseline={"output": "same", "cost_usd": 1.0, "latency_ms": 100},
+        candidate={"output": "same", "cost_usd": 1.25, "latency_ms": 100},
+        mode="full",
+        config_path=str(config_path),
+    )
+    assert decision.status == "BLOCK"
+    assert "STRICT_MODE_PROMOTION_BLOCK" in decision.reason_codes
 
 
 def test_lite_mode_ignores_latency_and_output_contract():

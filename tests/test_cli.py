@@ -614,6 +614,76 @@ def test_cli_accept_risk_rejected_in_full_mode(tmp_path):
     assert "--accept-risk is only available in --mode lite" in result.stderr
 
 
+def test_cli_full_mode_config_strict_promotes_warn_to_block(tmp_path):
+    config_path = tmp_path / "policy.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "strict_mode": {"enabled": True},
+                "cost_policy": {"warn_increase_pct": 20, "block_increase_pct": 40},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.0, "latency_ms": 100}), encoding="utf-8")
+    candidate_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.25, "latency_ms": 100}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            str(candidate_path),
+            "--mode",
+            "full",
+            "--config",
+            str(config_path),
+            "--json",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "BLOCK"
+    assert "STRICT_MODE_PROMOTION_BLOCK" in payload["reason_codes"]
+
+
+def test_cli_lite_accept_risk_creates_no_artifacts(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.0}), encoding="utf-8")
+    candidate_path.write_text(json.dumps({"output": "hello", "cost_usd": 1.25}), encoding="utf-8")
+    before = {p.name for p in tmp_path.iterdir()}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "evaluate",
+            str(baseline_path),
+            str(candidate_path),
+            "--accept-risk",
+            "cost",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    after = {p.name for p in tmp_path.iterdir()}
+    assert after == before
+
+
 def test_cli_config_print_with_env_applies_overrides(tmp_path):
     config_path = tmp_path / "policy.json"
     config_path.write_text(
