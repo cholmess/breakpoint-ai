@@ -1,7 +1,23 @@
 # BreakPoint Library
 
-Model or prompt changes can silently increase cost, leak PII, or break output behavior.
-BreakPoint is a local-first gate that compares baseline vs candidate outputs and returns a deterministic verdict: `ALLOW`, `WARN`, or `BLOCK`.
+You change a model.
+Output looks fine at a glance.
+Cost is suddenly +38%.
+A phone number slips into a response.
+BreakPoint catches it before deploy.
+
+BreakPoint is a local-first, deterministic pre-deploy gate for LLM changes with verdicts: `ALLOW`, `WARN`, `BLOCK`.
+
+## CI First (Recommended)
+
+```bash
+breakpoint evaluate baseline.json candidate.json --json --fail-on warn
+```
+
+Why this is the default integration path:
+- Machine-readable decision payload (`schema_version`, `status`, `reason_codes`, metrics).
+- Non-zero exit code on risky changes.
+- Easy to wire into existing CI without additional services.
 
 ## Try In 60 Seconds
 
