@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 from dataclasses import dataclass
 
 
@@ -98,7 +99,7 @@ def _expand_paths(paths: list[str]) -> list[str]:
 
 def _read_json(path: str) -> dict:
     if path == "-":
-        return json.loads(os.read(0, 1 << 20).decode("utf-8"))
+        return json.loads(sys.stdin.read())
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -117,4 +118,3 @@ def _validate_decision_payload(payload: object, source: str) -> None:
         raise ValueError(f"{source}: key 'reasons' must be an array of strings.")
     if not isinstance(payload["reason_codes"], list) or not all(isinstance(x, str) for x in payload["reason_codes"]):
         raise ValueError(f"{source}: key 'reason_codes' must be an array of strings.")
-

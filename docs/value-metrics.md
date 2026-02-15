@@ -31,16 +31,17 @@ Summarize one file:
 breakpoint metrics summarize breakpoint-decision.json
 ```
 
-Summarize a directory (recursive scan of `*.json`):
+Summarize a directory of decision artifacts (recursive scan of `*.json`):
 
 ```bash
-breakpoint metrics summarize . --json
+breakpoint metrics summarize ./artifacts --json
 ```
 
 Notes:
 
 - Summary reads BreakPoint decision JSON (contract fields `schema_version`, `status`, `reasons`, `reason_codes`).
 - If `metadata.waivers_applied` exists, it is counted as waiver usage.
+- JSON output fields include: `total`, `by_schema_version`, `by_status`, `reason_code_counts`, `waivers_applied_total`, `waived_reason_code_counts`.
 
 ## Joining To Feedback (Optional)
 
@@ -49,4 +50,12 @@ For outcome metrics like false-positive rate, you need a stable join key.
 BreakPoint decisions can be joined by:
 
 - the build/run identifier you store alongside the artifact, or
-- a stable hash of the decision JSON (future: first-class feedback format).
+- a stable hash of the decision JSON.
+
+Python helper:
+
+```python
+from breakpoint.engine.metrics import decision_fingerprint
+
+fingerprint = decision_fingerprint(decision.to_dict())
+```
