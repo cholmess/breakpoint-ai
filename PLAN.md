@@ -211,7 +211,8 @@ P0-5 — 10-Minute Quickstart
 - Completed: P0-3 Baseline Lifecycle
 - Completed: P0-4 Policy Calibration
 - Completed: P0-5 10-Minute Quickstart
-- Next focus: P1 CI templates and waivers
+- Completed: P1-0 CI templates (GitHub Actions + shell example)
+- Next focus: P1 waivers/suppressions with expiration + reason
 
 ### P1 (High-value after P0)
 - Built-in CI templates (GitHub Actions + generic shell example)

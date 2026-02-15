@@ -1,0 +1,37 @@
+name: breakpoint-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install BreakPoint
+        run: pip install .
+
+      - name: Run BreakPoint gate
+        run: |
+          breakpoint evaluate \
+            examples/quickstart/baseline.json \
+            examples/quickstart/candidate_warn.json \
+            --json \
+            --fail-on warn > breakpoint-decision.json
+
+      - name: Upload decision artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakpoint-decision
+          path: breakpoint-decision.json
