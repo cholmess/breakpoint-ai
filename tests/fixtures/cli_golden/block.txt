@@ -9,7 +9,7 @@ Policy Results:
 ✗ Response format: Invalid JSON detected (1).
 ✓ Cost: No issues.
 ✓ Latency: Delta +2.78%.
-⚠ Output drift: Risky delta detected.
+⚠ Output drift: Compression ratio 0.271429.
 
 Summary:
 Output contract break: candidate output is not valid JSON.

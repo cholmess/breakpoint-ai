@@ -389,6 +389,14 @@ def _policy_detail(policy: str, status: str, metrics: dict) -> str:
                     f"similarity {_format_metric_value('similarity', float(similarity))}."
                 )
             return f"Length delta {_format_metric_value('length_delta_pct', float(length_delta))}."
+        if status.upper() == "ALLOW":
+            return _fallback_detail(status)
+        short_ratio = metrics.get("short_ratio")
+        if isinstance(short_ratio, (int, float)):
+            return f"Compression ratio {_format_metric_value('short_ratio', float(short_ratio))}."
+        similarity = metrics.get("similarity")
+        if isinstance(similarity, (int, float)):
+            return f"Similarity {_format_metric_value('similarity', float(similarity))}."
         return _fallback_detail(status)
 
     return _fallback_detail(status)

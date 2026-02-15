@@ -33,7 +33,8 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
     if delta_pct > warn_delta:
         direction = "expanded" if candidate_len > baseline_len else "compressed"
         reasons.append(
-            f"Response length {direction} by {delta_pct:.1f}% (threshold {warn_delta:.0f}%)."
+            f"Response length {direction}: baseline {baseline_len} chars vs candidate {candidate_len} chars "
+            f"({delta_pct:.1f}%, threshold {warn_delta:.0f}%)."
         )
         codes.append("DRIFT_WARN_LENGTH_DELTA")
         details["length_delta_pct"] = delta_pct
@@ -41,8 +42,8 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
     if short_ratio < warn_short_ratio:
         shrink_pct = (1 - short_ratio) * 100
         reasons.append(
-            f"Response appears over-compressed: {shrink_pct:.1f}% shorter than baseline "
-            f"(ratio {short_ratio:.2f}, threshold {warn_short_ratio:.2f})."
+            f"Candidate likely dropped detail: {shrink_pct:.1f}% shorter than baseline "
+            f"({candidate_len}/{baseline_len} chars, ratio {short_ratio:.2f}, threshold {warn_short_ratio:.2f})."
         )
         codes.append("DRIFT_WARN_SHORT_OUTPUT")
         details["short_ratio"] = short_ratio
@@ -52,9 +53,11 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
         details["similarity"] = similarity
         details["similarity_method"] = similarity_method
         if similarity < min_similarity:
+            missing_terms = _top_missing_terms(baseline_text, candidate_text, limit=3)
+            missing_suffix = f" Missing baseline terms: {', '.join(missing_terms)}." if missing_terms else ""
             reasons.append(
-                f"Response content overlap is low: similarity {similarity:.2f} "
-                f"(threshold {min_similarity:.2f})."
+                f"Response content overlap is low (similarity {similarity:.2f}, threshold {min_similarity:.2f})."
+                f"{missing_suffix}"
             )
             codes.append("DRIFT_WARN_LOW_SIMILARITY")
 
@@ -109,6 +112,23 @@ def _similarity(left: str, right: str, method: str) -> float:
 
 def _tokenize(value: str) -> list[str]:
     return re.findall(r"[a-zA-Z0-9_]+", value.lower())
+
+
+def _top_missing_terms(baseline_text: str, candidate_text: str, limit: int = 3) -> list[str]:
+    if limit <= 0:
+        return []
+    baseline_tokens = _tokenize(baseline_text)
+    candidate_set = set(_tokenize(candidate_text))
+    missing: list[str] = []
+    for token in baseline_tokens:
+        if len(token) < 4:
+            continue
+        if token in candidate_set or token in missing:
+            continue
+        missing.append(token)
+        if len(missing) >= limit:
+            break
+    return missing
 
 
 def _as_text(value: object) -> str:
