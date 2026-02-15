@@ -2,6 +2,8 @@
 BreakPoint Evaluation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+Mode: full
+
 Final Decision: ALLOW
 
 Policy Results:

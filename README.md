@@ -33,6 +33,37 @@ Reasons:
 
 Ship with confidence.
 
+## Lite First (Default)
+
+Default command:
+
+```bash
+breakpoint evaluate baseline.json candidate.json
+```
+
+Lite mode defaults:
+- Cost: `WARN` at `+20%`, `BLOCK` at `+40%`
+- PII: `BLOCK` on first detection (email, phone, credit card)
+- Drift: `WARN` at `+35%` length delta, `BLOCK` at `+70%`
+- Empty output: always `BLOCK`
+
+Lite is local, deterministic, and zero-config.
+
+## Full Mode (Optional Advanced)
+
+Use Full mode when you want config-driven governance and CI enforcement:
+
+```bash
+breakpoint evaluate baseline.json candidate.json --mode full --json --fail-on warn
+```
+
+Full mode adds advanced controls:
+- Output contract enforcement
+- Latency policy
+- Presets/environments
+- Waivers
+- Custom pricing models
+
 ## CI First (Recommended)
 
 ```bash
@@ -44,10 +75,10 @@ Why this is the default integration path:
 - Non-zero exit code on risky changes.
 - Easy to wire into existing CI without additional services.
 
-Default policy posture (out of the box):
-- Cost: `WARN` at `+15%`, `BLOCK` at `+35%`
-- Latency: `WARN` at `+25%`, `BLOCK` at `+60%`
-- Drift: `WARN` for large length/similarity shifts (`75%`, `0.30`, `0.10`)
+Default policy posture (out of the box, Lite):
+- Cost: `WARN` at `+20%`, `BLOCK` at `+40%`
+- PII: `BLOCK` on first detection
+- Drift: `WARN` at `+35%`, `BLOCK` at `+70%`
 
 ### Copy-Paste GitHub Actions Gate
 
@@ -158,10 +189,10 @@ Stable exit codes:
 - `1` = `WARN`
 - `2` = `BLOCK`
 
-Waivers (suppressions):
+Waivers (suppressions, Full mode):
 
 ```bash
-breakpoint evaluate baseline.json candidate.json --config policy.json --now 2026-02-15T00:00:00Z --json
+breakpoint evaluate baseline.json candidate.json --mode full --config policy.json --now 2026-02-15T00:00:00Z --json
 ```
 
 Config inspection:

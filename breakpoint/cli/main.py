@@ -313,6 +313,8 @@ def _print_text_decision(decision, exit_code: int, mode: str, accepted_risks: li
     print("BreakPoint Evaluation")
     print(_SECTION_DIVIDER)
     print()
+    print(f"Mode: {mode}")
+    print()
     if mode == "lite" and accepted_risks:
         accepted = ", ".join(sorted(set(accepted_risks)))
         print(f"Accepted Risk Override (one-shot): {accepted}")
