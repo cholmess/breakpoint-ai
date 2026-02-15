@@ -1,0 +1,8 @@
+{
+  "output": "I fixed it. Customer should try again.",
+  "tokens_in": 50000,
+  "tokens_out": 10000,
+  "latency_ms": 185,
+  "model": "gpt-4.1-mini",
+  "cost_usd": 0.45
+}

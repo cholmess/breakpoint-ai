@@ -1,0 +1,8 @@
+{
+  "output": "{\"ticket_summary\":\"Customer cannot access account after password reset. Contact john.doe@example.com or call 415-555-1212 for direct handling. Also notify ops+oncall@example.com immediately and include callback 212-555-0100.\",\"severity\":\"medium\",\"next_step\":\"send reset link, verify device, verify browser cache, confirm regional failover status, and provide step-by-step remediation notes for audit\"}",
+  "tokens_in": 50000,
+  "tokens_out": 18000,
+  "latency_ms": 225,
+  "model": "gpt-4.1-mini",
+  "cost_usd": 0.52
+}

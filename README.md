@@ -11,6 +11,7 @@ breakpoint evaluate baseline.json candidate.json
 
 Detailed 10-minute walkthrough:
 - `docs/quickstart-10min.md`
+- `docs/install-worthy-examples.md`
 
 ## CLI
 
