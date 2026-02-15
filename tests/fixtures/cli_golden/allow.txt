@@ -1,8 +1,18 @@
-VERDICT: ALLOW
-TOP_REASONS:
-- None
-KEY_DELTAS:
-- Latency delta %: +2.00%
-- Latency delta ms: +2.00
-- Similarity: 1.000000
-RECOMMENDED_ACTION: Safe to ship.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BreakPoint Evaluation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Final Decision: ALLOW
+
+Policy Results:
+✓ No PII detected: No matches.
+✓ Response format: No schema drift detected.
+✓ Cost: No issues.
+✓ Latency: Delta +2.00%.
+✓ Output drift: No issues.
+
+Summary:
+No risky deltas detected against configured policies.
+
+Exit Code: 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

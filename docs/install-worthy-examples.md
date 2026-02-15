@@ -54,7 +54,7 @@ Expected status: `BLOCK`
 Why this matters:
 - Candidate introduces direct PII (email/phone) while also drifting longer and noisier.
 
-## Scenario D: Killer tradeoff (looks better, ships worse)
+## Scenario D: Small prompt change -> big cost blowup
 
 Command:
 
@@ -65,7 +65,7 @@ breakpoint evaluate examples/install_worthy/baseline.json examples/install_worth
 Expected status: `BLOCK`
 
 Why this matters:
-- Candidate appears richer, but cost and latency spike while output verbosity drifts significantly.
+- Candidate still looks acceptable to a quick reviewer, but a prompt-detail tweak plus model upgrade drives major cost/latency growth and output-contract drift.
 
 ## JSON mode for deterministic checks
 

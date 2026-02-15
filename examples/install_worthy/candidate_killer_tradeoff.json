@@ -1,5 +1,5 @@
 {
-  "output": "{\"ticket_summary\":\"Customer cannot access account after password reset\",\"severity\":\"medium\",\"next_step\":\"Before sending the reset link, perform a full narrative recap of all account activity in the last 30 days, include suspicious-login geography interpretation, provide two fallback workflows, and include an explanatory paragraph for each remediation branch so the handoff is fully self-contained for overnight support teams.\"}",
+  "output": "{\"summary\":\"Customer cannot access account after password reset and asks for immediate recovery\",\"severity\":\"medium\",\"next_step\":\"Send reset link, verify device fingerprint, then confirm successful login\",\"explanation\":\"System prompt changed to 'be extremely detailed'; response now includes extra narrative context and operational guidance for handoff teams.\"}",
   "tokens_in": 50000,
   "tokens_out": 28000,
   "latency_ms": 300,

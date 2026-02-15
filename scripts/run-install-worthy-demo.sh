@@ -20,7 +20,7 @@ echo "Expected outcomes:"
 echo "- Scenario A (cost model swap): BLOCK"
 echo "- Scenario B (format regression): BLOCK"
 echo "- Scenario C (PII + verbosity): BLOCK"
-echo "- Scenario D (killer tradeoff): BLOCK"
+echo "- Scenario D (small prompt change -> cost blowup): BLOCK"
 echo
 
 run_case() {
@@ -35,7 +35,7 @@ run_case() {
 run_case "Scenario A: Cost regression from model swap" "examples/install_worthy/candidate_cost_model_swap.json"
 run_case "Scenario B: Structured-output format regression" "examples/install_worthy/candidate_format_regression.json"
 run_case "Scenario C: PII + verbosity drift" "examples/install_worthy/candidate_pii_verbosity.json"
-run_case "Scenario D: Killer tradeoff" "examples/install_worthy/candidate_killer_tradeoff.json"
+run_case "Scenario D: Small prompt change -> cost blowup" "examples/install_worthy/candidate_killer_tradeoff.json"
 
 echo "Done."
 echo "Troubleshooting:"

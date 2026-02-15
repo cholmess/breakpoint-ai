@@ -1,7 +1,7 @@
 {
   "cost_policy": {
     "min_baseline_cost_usd": 0.01,
-    "warn_increase_pct": 20,
+    "warn_increase_pct": 15,
     "block_increase_pct": 35,
     "warn_delta_usd": 0.0,
     "block_delta_usd": 0.0
@@ -30,7 +30,7 @@
   },
   "latency_policy": {
     "min_baseline_latency_ms": 50,
-    "warn_increase_pct": 30,
+    "warn_increase_pct": 25,
     "block_increase_pct": 60,
     "warn_delta_ms": 0.0,
     "block_delta_ms": 0.0

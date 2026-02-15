@@ -1,12 +1,37 @@
 # BreakPoint Library
 
-You change a model.
-Output looks fine at a glance.
-Cost is suddenly +38%.
-A phone number slips into a response.
-BreakPoint catches it before deploy.
+Prevent bad AI releases before they hit production.
 
-BreakPoint is a local-first, deterministic pre-deploy gate for LLM changes with verdicts: `ALLOW`, `WARN`, `BLOCK`.
+You change a model.
+The output looks fine.
+But:
+- Cost jumps +38%.
+- A phone number slips into the response.
+- The format breaks your downstream parser.
+
+BreakPoint catches it before you deploy.
+
+It runs locally.
+Policy evaluation is deterministic from your saved artifacts.
+It gives you one clear answer:
+
+`ALLOW` · `WARN` · `BLOCK`
+
+## Quick Example
+
+```bash
+breakpoint evaluate baseline.json candidate.json
+```
+
+```text
+STATUS: BLOCK
+
+Reasons:
+- Cost increased by 38% (baseline: 1,000 tokens -> candidate: 1,380)
+- Detected US phone number pattern
+```
+
+Ship with confidence.
 
 ## CI First (Recommended)
 
@@ -19,6 +44,11 @@ Why this is the default integration path:
 - Non-zero exit code on risky changes.
 - Easy to wire into existing CI without additional services.
 
+Default policy posture (out of the box):
+- Cost: `WARN` at `+15%`, `BLOCK` at `+35%`
+- Latency: `WARN` at `+25%`, `BLOCK` at `+60%`
+- Drift: `WARN` for large length/similarity shifts (`75%`, `0.30`, `0.10`)
+
 ## Try In 60 Seconds
 
 ```bash
@@ -30,9 +60,9 @@ What you should see:
 - Scenario A: `BLOCK` (cost spike)
 - Scenario B: `BLOCK` (format/contract regression)
 - Scenario C: `BLOCK` (PII + verbosity drift)
-- Scenario D: `BLOCK` (cost/latency/verbosity tradeoff)
+- Scenario D: `BLOCK` (small prompt change -> cost blowup)
 
-## Three Realistic Examples
+## Four Realistic Examples
 
 Baseline for all examples:
 - `examples/install_worthy/baseline.json`
@@ -63,6 +93,15 @@ breakpoint evaluate examples/install_worthy/baseline.json examples/install_worth
 
 Expected: `BLOCK`
 Why it matters: candidate introduces PII and adds verbosity drift.
+
+### 4) Small prompt change -> big cost blowup
+
+```bash
+breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_killer_tradeoff.json
+```
+
+Expected: `BLOCK`
+Why it matters: output still looks workable, but detail-heavy prompt changes plus a model upgrade create large cost and latency increases with output-contract drift.
 
 More scenario details:
 - `docs/install-worthy-examples.md`

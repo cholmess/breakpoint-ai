@@ -37,6 +37,16 @@ _METRIC_LABELS = {
     "similarity": "Similarity",
 }
 
+_POLICY_DISPLAY_ORDER = ["pii", "output_contract", "cost", "latency", "drift"]
+_POLICY_LABELS = {
+    "pii": "No PII detected",
+    "output_contract": "Response format",
+    "cost": "Cost",
+    "latency": "Latency",
+    "drift": "Output drift",
+}
+_SECTION_DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="breakpoint")
@@ -160,12 +170,13 @@ def _run_evaluate(args: argparse.Namespace) -> int:
             fail_on=args.fail_on,
         )
 
-    _print_text_decision(decision)
-    return _result_exit_code(
+    exit_code = _result_exit_code(
         status=decision.status,
         exit_codes_enabled=args.exit_codes,
         fail_on=args.fail_on,
     )
+    _print_text_decision(decision, exit_code=exit_code)
+    return exit_code
 
 
 def _run_config_print(args: argparse.Namespace) -> int:
@@ -260,25 +271,136 @@ def _result_exit_code(status: str, exit_codes_enabled: bool, fail_on: str | None
     return 0
 
 
-def _print_text_decision(decision) -> None:
-    print(f"VERDICT: {decision.status}")
-
-    print("TOP_REASONS:")
+def _print_text_decision(decision, exit_code: int) -> None:
+    print(_SECTION_DIVIDER)
+    print("BreakPoint Evaluation")
+    print(_SECTION_DIVIDER)
+    print()
+    print(f"Final Decision: {decision.status}")
+    print()
+    print("Policy Results:")
+    policy_statuses = _policy_status_by_reason_code(decision.reason_codes)
+    for policy in _POLICY_DISPLAY_ORDER:
+        status = policy_statuses.get(policy, "ALLOW")
+        print(f"{_status_symbol(status)} {_policy_label(policy)}: {_policy_detail(policy, status, decision.metrics)}")
+    print()
+    print("Summary:")
     if decision.reasons:
-        for reason in decision.reasons:
-            print(f"- {reason}")
+        print(decision.reasons[0])
+        if len(decision.reasons) > 1:
+            print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
     else:
-        print("- None")
+        print("No risky deltas detected against configured policies.")
+    print()
+    print(f"Exit Code: {exit_code}")
+    print(_SECTION_DIVIDER)
 
-    print("KEY_DELTAS:")
-    delta_lines = _metric_lines(decision.metrics)
-    if delta_lines:
-        for line in delta_lines:
-            print(f"- {line}")
-    else:
-        print("- None")
 
-    print(f"RECOMMENDED_ACTION: {_recommended_action(decision.status)}")
+def _status_symbol(status: str) -> str:
+    normalized = status.upper()
+    if normalized == "BLOCK":
+        return "✗"
+    if normalized == "WARN":
+        return "⚠"
+    return "✓"
+
+
+def _policy_label(policy: str) -> str:
+    return _POLICY_LABELS.get(policy, policy)
+
+
+def _policy_status_by_reason_code(reason_codes: list[str]) -> dict[str, str]:
+    statuses = {policy: "ALLOW" for policy in _POLICY_DISPLAY_ORDER}
+    for code in reason_codes:
+        policy = _policy_from_reason_code(code)
+        if policy is None:
+            continue
+        severity = _severity_from_reason_code(code)
+        current = statuses.get(policy, "ALLOW")
+        if severity == "BLOCK":
+            statuses[policy] = "BLOCK"
+        elif severity == "WARN" and current == "ALLOW":
+            statuses[policy] = "WARN"
+    return statuses
+
+
+def _policy_from_reason_code(code: str) -> str | None:
+    if code.startswith("PII_"):
+        return "pii"
+    if code.startswith("OUTPUT_CONTRACT_"):
+        return "output_contract"
+    if code.startswith("COST_"):
+        return "cost"
+    if code.startswith("LATENCY_"):
+        return "latency"
+    if code.startswith("DRIFT_"):
+        return "drift"
+    return None
+
+
+def _severity_from_reason_code(code: str) -> str:
+    if code.endswith("_BLOCK"):
+        return "BLOCK"
+    if code.endswith("_WARN"):
+        return "WARN"
+    return "ALLOW"
+
+
+def _policy_detail(policy: str, status: str, metrics: dict) -> str:
+    if policy == "pii":
+        blocked_total = metrics.get("pii_blocked_total")
+        if isinstance(blocked_total, (int, float)) and blocked_total > 0:
+            return f"Detected {int(blocked_total)} match(es)."
+        return "No matches."
+
+    if policy == "output_contract":
+        invalid_count = metrics.get("output_contract_invalid_json_count")
+        missing_count = metrics.get("output_contract_missing_keys_count")
+        mismatch_count = metrics.get("output_contract_type_mismatch_count")
+        if isinstance(invalid_count, (int, float)) and invalid_count > 0:
+            return f"Invalid JSON detected ({int(invalid_count)})."
+        if (isinstance(missing_count, (int, float)) and missing_count > 0) or (
+            isinstance(mismatch_count, (int, float)) and mismatch_count > 0
+        ):
+            missing_value = int(missing_count) if isinstance(missing_count, (int, float)) else 0
+            mismatch_value = int(mismatch_count) if isinstance(mismatch_count, (int, float)) else 0
+            return f"Format drift detected (missing keys: {missing_value}, type mismatches: {mismatch_value})."
+        return "No schema drift detected."
+
+    if policy == "cost":
+        value = metrics.get("cost_delta_pct")
+        if isinstance(value, (int, float)):
+            return f"Delta {_format_metric_value('cost_delta_pct', float(value))}."
+        return _fallback_detail(status)
+
+    if policy == "latency":
+        value = metrics.get("latency_delta_pct")
+        if isinstance(value, (int, float)):
+            return f"Delta {_format_metric_value('latency_delta_pct', float(value))}."
+        return _fallback_detail(status)
+
+    if policy == "drift":
+        length_delta = metrics.get("length_delta_pct")
+        if isinstance(length_delta, (int, float)):
+            similarity = metrics.get("similarity")
+            if isinstance(similarity, (int, float)):
+                return (
+                    f"Length delta {_format_metric_value('length_delta_pct', float(length_delta))}, "
+                    f"similarity {_format_metric_value('similarity', float(similarity))}."
+                )
+            return f"Length delta {_format_metric_value('length_delta_pct', float(length_delta))}."
+        return _fallback_detail(status)
+
+    return _fallback_detail(status)
+
+
+def _fallback_detail(status: str) -> str:
+    normalized = status.upper()
+    if normalized == "BLOCK":
+        return "Policy violation detected."
+    if normalized == "WARN":
+        return "Risky delta detected."
+    return "No issues."
 
 
 def _metric_lines(metrics: dict) -> list[str]:

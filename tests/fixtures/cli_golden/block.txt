@@ -1,12 +1,19 @@
-VERDICT: BLOCK
-TOP_REASONS:
-- Output contract break: candidate output is not valid JSON.
-- Response appears over-compressed: 72.9% shorter than baseline (ratio 0.27, threshold 0.30).
-- Response content overlap is low: similarity 0.07 (threshold 0.10).
-KEY_DELTAS:
-- Latency delta %: +2.78%
-- Latency delta ms: +5.00
-- Short ratio: 0.271429
-- Output contract invalid JSON count: 1
-- Similarity: 0.067164
-RECOMMENDED_ACTION: Stop deploy and investigate.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BreakPoint Evaluation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Final Decision: BLOCK
+
+Policy Results:
+✓ No PII detected: No matches.
+✗ Response format: Invalid JSON detected (1).
+✓ Cost: No issues.
+✓ Latency: Delta +2.78%.
+⚠ Output drift: Risky delta detected.
+
+Summary:
+Output contract break: candidate output is not valid JSON.
+2 additional signal(s) detected.
+
+Exit Code: 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -76,10 +76,10 @@ def test_cli_strict_blocks(tmp_path):
     )
 
     assert result.returncode == 0
-    assert "VERDICT: BLOCK" in result.stdout
-    assert "TOP_REASONS:" in result.stdout
-    assert "KEY_DELTAS:" in result.stdout
-    assert "RECOMMENDED_ACTION: Stop deploy and investigate." in result.stdout
+    assert "Final Decision: BLOCK" in result.stdout
+    assert "Policy Results:" in result.stdout
+    assert "Summary:" in result.stdout
+    assert "Exit Code: 0" in result.stdout
 
 
 def test_cli_text_output_has_deterministic_summary_order(tmp_path):
@@ -110,26 +110,19 @@ def test_cli_text_output_has_deterministic_summary_order(tmp_path):
 
     assert result.returncode == 0
     lines = [line for line in result.stdout.splitlines() if line.strip()]
-    assert lines[0] == "VERDICT: BLOCK"
-    assert lines[1] == "TOP_REASONS:"
-    assert "KEY_DELTAS:" in lines
-    assert "RECOMMENDED_ACTION: Stop deploy and investigate." in lines
-
-    key_deltas_index = lines.index("KEY_DELTAS:")
-    deltas = []
-    for line in lines[key_deltas_index + 1 :]:
-        if line.startswith("RECOMMENDED_ACTION:"):
-            break
-        if line.startswith("- "):
-            deltas.append(line)
-    assert deltas == [
-        "- Cost delta %: +40.00%",
-        "- Cost delta USD: +0.400000",
-        "- Latency delta %: +60.00%",
-        "- Latency delta ms: +60.00",
-        "- Length delta %: +81.82%",
-        "- Similarity: 0.666667",
-    ]
+    assert lines[0] == "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    assert lines[1] == "BreakPoint Evaluation"
+    assert lines[2] == "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    assert "Final Decision: BLOCK" in lines
+    assert "Policy Results:" in lines
+    policy_results_index = lines.index("Policy Results:")
+    assert lines[policy_results_index + 1].startswith("✓ No PII detected:")
+    assert lines[policy_results_index + 2].startswith("✓ Response format:")
+    assert lines[policy_results_index + 3].startswith("✗ Cost:")
+    assert lines[policy_results_index + 4].startswith("⚠ Latency:")
+    assert lines[policy_results_index + 5].startswith("⚠ Output drift:")
+    assert lines[-2] == "Exit Code: 0"
+    assert lines[-1] == "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 
 def test_cli_text_output_matches_allow_golden():
@@ -159,7 +152,7 @@ def test_cli_text_output_matches_block_golden():
     assert result.stdout == _read_golden("block.txt")
 
 
-def test_cli_recommended_action_by_status():
+def test_cli_decision_header_by_status():
     allow_result = _run_evaluate_text(
         "examples/quickstart/baseline.json",
         "examples/quickstart/candidate_allow.json",
@@ -173,9 +166,9 @@ def test_cli_recommended_action_by_status():
         "examples/install_worthy/candidate_format_regression.json",
     )
 
-    assert "RECOMMENDED_ACTION: Safe to ship." in allow_result.stdout
-    assert "RECOMMENDED_ACTION: Ship with review." in warn_result.stdout
-    assert "RECOMMENDED_ACTION: Stop deploy and investigate." in block_result.stdout
+    assert "Final Decision: ALLOW" in allow_result.stdout
+    assert "Final Decision: WARN" in warn_result.stdout
+    assert "Final Decision: BLOCK" in block_result.stdout
 
 
 def test_cli_text_output_shows_pii_counts(tmp_path):
@@ -202,10 +195,9 @@ def test_cli_text_output_shows_pii_counts(tmp_path):
     )
 
     assert result.returncode == 0
-    assert "VERDICT: BLOCK" in result.stdout
-    assert "KEY_DELTAS:" in result.stdout
-    assert "- PII blocked total: 2" in result.stdout
-    assert "- PII blocked type count: 1" in result.stdout
+    assert "Final Decision: BLOCK" in result.stdout
+    assert "Policy Results:" in result.stdout
+    assert "✗ No PII detected: Detected 2 match(es)." in result.stdout
 
 
 def test_cli_exit_codes_enabled(tmp_path):

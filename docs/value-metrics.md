@@ -16,18 +16,29 @@ Outcome metrics (requires human/system feedback):
 - `false_positive_rate`: fraction of WARN/BLOCK later judged safe
 - `true_positive_rate`: fraction of BLOCK that prevented a bad deploy
 
-## Default Threshold Tuning (2026-02-15)
+## Default Thresholds (2026-02-15)
 
-Current default drift thresholds were tuned to reduce noisy WARNs while preserving high-signal regressions:
+Current defaults are calibrated for early signal while keeping `BLOCK` conservative:
 
-- `warn_length_delta_pct`: `75` (was `60`)
-- `warn_short_ratio`: `0.30` (was `0.35`)
-- `warn_min_similarity`: `0.10` (was `0.15`)
+- Cost:
+  - `warn_increase_pct`: `15`
+  - `block_increase_pct`: `35`
+  - `warn_delta_usd`: `0.0`
+  - `block_delta_usd`: `0.0`
+- Latency:
+  - `warn_increase_pct`: `25`
+  - `block_increase_pct`: `60`
+  - `warn_delta_ms`: `0.0`
+  - `block_delta_ms`: `0.0`
+- Drift:
+  - `warn_length_delta_pct`: `75`
+  - `warn_short_ratio`: `0.30`
+  - `warn_min_similarity`: `0.10`
 
 Rationale:
-- Moderate length variation alone should not dominate decisions in normal prompt iteration.
-- Severe drift, contract breaks, PII, cost spikes, and latency spikes still trigger as before.
-- Teams can tighten thresholds via presets or project config when workflows need stricter guards.
+- `WARN` should appear earlier for meaningful regressions.
+- `BLOCK` remains reserved for clear risk or policy violations.
+- Presets and project configs can tighten drift or add absolute deltas for stricter workflows.
 
 ## Store Decision Artifacts
 
