@@ -116,12 +116,12 @@ def test_cli_text_output_has_deterministic_summary_order(tmp_path):
     assert lines[2] == "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     assert "Final Decision: BLOCK" in lines
     assert "Policy Results:" in lines
+    assert "Mode: lite" in lines
     policy_results_index = lines.index("Policy Results:")
-    assert lines[policy_results_index + 1].startswith("✓ No PII detected:")
-    assert lines[policy_results_index + 2].startswith("✓ Response format:")
-    assert lines[policy_results_index + 3].startswith("✗ Cost:")
-    assert lines[policy_results_index + 4].startswith("✓ Latency:")
-    assert lines[policy_results_index + 5].startswith("✗ Output drift:")
+    # Lite mode shows only pii, cost, drift (no Response format or Latency)
+    assert "✓ No PII detected:" in lines[policy_results_index + 1]
+    assert "✗ Cost:" in lines[policy_results_index + 2]
+    assert "✗ Output drift:" in lines[policy_results_index + 3]
     assert lines[-2] == "Exit Code: 0"
     assert lines[-1] == "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 

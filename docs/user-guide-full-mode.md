@@ -2,6 +2,12 @@
 
 This guide explains how to use BreakPoint in **Full mode**: config-driven policies, output contract enforcement, latency, presets, environments, waivers, and custom pricing.
 
+## Terminal Output: How Full Differs from Lite
+
+In **Lite** mode the terminal shows only the policies that run: **3 lines** (No PII, Cost, Output drift). **Response format** and **Latency** are not evaluated, so they are not shown.
+
+In **Full** mode the terminal shows **5 lines**: No PII, **Response format**, Cost, **Latency**, Output drift. So you can tell the mode at a glance: Lite has 3 policy lines, Full has 5.
+
 ## When to Use Full Mode
 
 Use Full mode when you need:

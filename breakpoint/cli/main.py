@@ -39,6 +39,8 @@ _METRIC_LABELS = {
 }
 
 _POLICY_DISPLAY_ORDER = ["pii", "output_contract", "cost", "latency", "drift"]
+# Lite mode only evaluates pii, cost, drift; Full mode evaluates all five.
+_POLICY_DISPLAY_ORDER_LITE = ["pii", "cost", "drift"]
 _POLICY_LABELS = {
     "pii": "No PII detected",
     "output_contract": "Response format",
@@ -390,7 +392,8 @@ def _print_text_decision(
     print()
     print("Policy Results:")
     policy_statuses = _policy_status_by_reason_code(decision.reason_codes)
-    for policy in _POLICY_DISPLAY_ORDER:
+    policies_to_show = _POLICY_DISPLAY_ORDER if mode == "full" else _POLICY_DISPLAY_ORDER_LITE
+    for policy in policies_to_show:
         status = policy_statuses.get(policy, "ALLOW")
         detail = _policy_detail_enhanced(
             policy, 

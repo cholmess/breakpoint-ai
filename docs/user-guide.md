@@ -90,7 +90,7 @@ Use this for CI gating.
 
 ## Lite Mode vs Full Mode
 
-Default mode is `lite` (zero-config):
+Default mode is `lite` (zero-config). In the terminal, **Lite** shows 3 policy lines (PII, Cost, Drift); **Full** shows 5 (adds Response format, Latency). So you can tell the mode by how many Policy Results lines appear.
 
 ```bash
 breakpoint evaluate baseline.json candidate.json
