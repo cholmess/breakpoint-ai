@@ -377,6 +377,8 @@ def _print_text_decision(
     print()
     print(f"Mode: {mode}")
     print()
+    if mode == "full":
+        _print_full_mode_explainability(decision)
     if mode == "lite" and accepted_risks:
         accepted = ", ".join(sorted(set(accepted_risks)))
         print(f"Accepted Risk Override (one-shot): {accepted}")
@@ -452,6 +454,26 @@ def _print_text_decision(
     
     print(f"Exit Code: {exit_code}")
     print(_SECTION_DIVIDER)
+
+
+def _print_full_mode_explainability(decision) -> None:
+    """In Full mode, print what was evaluated and any waivers for explainability."""
+    print("Policies evaluated (Full mode):")
+    print("  • PII: Block if email, phone, credit card, or SSN detected in candidate output.")
+    print("  • Response format: If baseline output is JSON, candidate must be valid JSON and match keys/types.")
+    print("  • Cost: WARN/BLOCK on % or $ increase vs baseline (thresholds from config).")
+    print("  • Latency: WARN/BLOCK on % or ms increase vs baseline (thresholds from config).")
+    print("  • Output drift: WARN/BLOCK on length change and similarity drop vs baseline.")
+    waivers = (decision.metadata or {}).get("waivers_applied")
+    if isinstance(waivers, list) and waivers:
+        print()
+        print("Waivers applied (suppressed for this run):")
+        for w in waivers:
+            if isinstance(w, dict):
+                code = w.get("reason_code", "")
+                expires = w.get("expires_at", "")
+                print(f"  - {code} (expires {expires})")
+    print()
 
 
 def _status_symbol(status: str) -> str:

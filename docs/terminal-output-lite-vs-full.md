@@ -64,6 +64,13 @@ BreakPoint Evaluation
 
 Mode: full
 
+Policies evaluated (Full mode):
+  • PII: Block if email, phone, credit card, or SSN detected in candidate output.
+  • Response format: If baseline output is JSON, candidate must be valid JSON and match keys/types.
+  • Cost: WARN/BLOCK on % or $ increase vs baseline (thresholds from config).
+  • Latency: WARN/BLOCK on % or ms increase vs baseline (thresholds from config).
+  • Output drift: WARN/BLOCK on length change and similarity drop vs baseline.
+
 Input Comparison:
   Output Length: 46 chars → 46 chars
   Cost: $1.0000 → $1.0100
@@ -88,7 +95,7 @@ Exit Code: 0
 
 **Result:** ✓ ALLOW – Safe to deploy
 
-In Full, **Response format** (output contract) and **Latency** are evaluated and shown as two extra lines.
+In Full, **Response format** (output contract) and **Latency** are evaluated and shown as two extra lines. The **Policies evaluated (Full mode)** block explains what each of the five policies does before the results, for explainability.
 
 ---
 
@@ -97,10 +104,11 @@ In Full, **Response format** (output contract) and **Latency** are evaluated and
 | Section           | Lite | Full |
 |------------------|------|------|
 | Mode             | `lite` | `full` |
+| **Policies evaluated** | — | **Yes** — one-line description of each of the 5 policies (explainability) |
 | Input Comparison | Same | Same |
 | Final Decision   | Same | Same |
 | **Policy Results** | **3 lines**: PII, Cost, Drift | **5 lines**: PII, Response format, Cost, Latency, Drift |
 | Summary          | Same | Same |
 | Exit Code        | Same | Same |
 
-So: same structure and wording; the only visible difference is **3 vs 5 policy lines** and the Mode label.
+So: Full adds a **Policies evaluated** block for explainability and two extra policy lines; otherwise the structure is the same.

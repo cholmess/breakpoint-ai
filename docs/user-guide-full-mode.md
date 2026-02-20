@@ -10,6 +10,20 @@ In **Full** mode the terminal shows **5 lines**: No PII, **Response format**, Co
 
 For a side-by-side reference in the same format (Command → Actual Output → Result), see **`docs/terminal-output-lite-vs-full.md`**.
 
+## Explainability: What Full Mode Shows
+
+When you run with `--mode full`, the terminal prints an extra **Policies evaluated (Full mode)** block right after the mode line. It explains in one line what each of the five policies does:
+
+- **PII** — Block if email, phone, credit card, or SSN is detected in the candidate output.
+- **Response format** — If the baseline output is JSON, the candidate must be valid JSON and match keys/types (output contract).
+- **Cost** — WARN/BLOCK on percentage or absolute cost increase vs baseline (thresholds come from config or defaults).
+- **Latency** — WARN/BLOCK on percentage or absolute latency increase vs baseline (thresholds from config).
+- **Output drift** — WARN/BLOCK on length change and similarity drop vs baseline.
+
+If any **waivers** were applied (e.g. a time-limited suppression for a specific reason code), Full mode also prints **Waivers applied** with the reason code and expiry so you can see what was suppressed for that run.
+
+After that, **Policy Results** shows the outcome per policy (✓ / ⚠ / ✗), **Summary** gives the human-readable reasons, and **Reason Codes** lists the machine-readable codes (e.g. `COST_INCREASE_WARN`, `DRIFT_LENGTH_BLOCK`) for scripting or CI. **Detailed Metrics** shows the numeric deltas (cost %, latency ms, length %, similarity, etc.) so you can see exactly what drove the decision.
+
 ## When to Use Full Mode
 
 Use Full mode when you need:
