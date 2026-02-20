@@ -8,8 +8,10 @@
     "block_increase_pct": 100
   },
   "drift_policy": {
-    "warn_length_delta_pct": 120,
-    "block_length_delta_pct": 140,
+    "warn_expansion_pct": 120,
+    "block_expansion_pct": 140,
+    "warn_compression_pct": 120,
+    "block_compression_pct": 140,
     "warn_short_ratio": 0.25,
     "warn_min_similarity": 0.10
   }

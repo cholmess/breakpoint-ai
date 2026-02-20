@@ -56,8 +56,10 @@ def _extract_metrics(details: dict) -> dict:
         metrics["latency_delta_ms"] = round(float(latency["delta_ms"]), 4)
 
     drift = details.get("drift", {})
-    if isinstance(drift.get("length_delta_pct"), (int, float)):
-        metrics["length_delta_pct"] = round(float(drift["length_delta_pct"]), 4)
+    if isinstance(drift.get("expansion_pct"), (int, float)):
+        metrics["expansion_pct"] = round(float(drift["expansion_pct"]), 4)
+    if isinstance(drift.get("compression_pct"), (int, float)):
+        metrics["compression_pct"] = round(float(drift["compression_pct"]), 4)
     if isinstance(drift.get("short_ratio"), (int, float)):
         metrics["short_ratio"] = round(float(drift["short_ratio"]), 6)
     if isinstance(drift.get("similarity"), (int, float)):

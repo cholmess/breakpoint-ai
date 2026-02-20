@@ -13,7 +13,8 @@ _METRIC_DISPLAY_ORDER = [
     "cost_delta_usd",
     "latency_delta_pct",
     "latency_delta_ms",
-    "length_delta_pct",
+    "expansion_pct",
+    "compression_pct",
     "short_ratio",
     "pii_blocked_total",
     "pii_blocked_type_count",
@@ -28,7 +29,8 @@ _METRIC_LABELS = {
     "cost_delta_usd": "Cost delta USD",
     "latency_delta_pct": "Latency delta %",
     "latency_delta_ms": "Latency delta ms",
-    "length_delta_pct": "Length delta %",
+    "expansion_pct": "Expansion %",
+    "compression_pct": "Compression %",
     "short_ratio": "Short ratio",
     "pii_blocked_total": "PII blocked total",
     "pii_blocked_type_count": "PII blocked type count",
@@ -695,15 +697,26 @@ def _policy_detail(policy: str, status: str, metrics: dict) -> str:
         return _fallback_detail(status)
 
     if policy == "drift":
-        length_delta = metrics.get("length_delta_pct")
-        if isinstance(length_delta, (int, float)):
-            similarity = metrics.get("similarity")
+        expansion = metrics.get("expansion_pct")
+        compression = metrics.get("compression_pct")
+        similarity = metrics.get("similarity")
+        
+        if isinstance(expansion, (int, float)):
             if isinstance(similarity, (int, float)):
                 return (
-                    f"Length delta {_format_metric_value('length_delta_pct', float(length_delta))}, "
+                    f"Expansion {_format_metric_value('expansion_pct', float(expansion))}, "
                     f"similarity {_format_metric_value('similarity', float(similarity))}."
                 )
-            return f"Length delta {_format_metric_value('length_delta_pct', float(length_delta))}."
+            return f"Expansion {_format_metric_value('expansion_pct', float(expansion))}."
+            
+        if isinstance(compression, (int, float)):
+            if isinstance(similarity, (int, float)):
+                return (
+                    f"Compression {_format_metric_value('compression_pct', float(compression))}, "
+                    f"similarity {_format_metric_value('similarity', float(similarity))}."
+                )
+            return f"Compression {_format_metric_value('compression_pct', float(compression))}."
+
         if status.upper() == "ALLOW":
             return _fallback_detail(status)
         short_ratio = metrics.get("short_ratio")

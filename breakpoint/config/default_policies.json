@@ -22,8 +22,10 @@
     "warn_on_type_mismatch": true
   },
   "drift_policy": {
-    "warn_length_delta_pct": 35,
-    "block_length_delta_pct": 70,
+    "warn_expansion_pct": 35,
+    "block_expansion_pct": 70,
+    "warn_compression_pct": 35,
+    "block_compression_pct": 70,
     "warn_short_ratio": 0.30,
     "warn_min_similarity": 0.10,
     "semantic_check_enabled": true,

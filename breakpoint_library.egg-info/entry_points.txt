@@ -1,0 +1,2 @@
+[console_scripts]
+breakpoint = breakpoint.cli.main:main

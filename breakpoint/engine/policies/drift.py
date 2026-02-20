@@ -24,29 +24,45 @@ def evaluate_drift_policy(baseline: dict, candidate: dict, thresholds: dict) -> 
     delta_pct = abs(candidate_len - baseline_len) / baseline_len * 100
     short_ratio = candidate_len / baseline_len
 
-    warn_delta = float(thresholds.get("warn_length_delta_pct", 60))
-    block_delta = float(thresholds.get("block_length_delta_pct", 70))
+    warn_expansion = float(thresholds.get("warn_expansion_pct", 60))
+    block_expansion = float(thresholds.get("block_expansion_pct", 70))
+    warn_compression = float(thresholds.get("warn_compression_pct", 60))
+    block_compression = float(thresholds.get("block_compression_pct", 70))
     warn_short_ratio = float(thresholds.get("warn_short_ratio", 0.35))
     min_similarity = float(thresholds.get("warn_min_similarity", 0.15))
     semantic_enabled = bool(thresholds.get("semantic_check_enabled", True))
     similarity_method = str(thresholds.get("similarity_method", "max(token_jaccard,char_3gram_jaccard)"))
 
-    if delta_pct >= block_delta:
-        direction = "expanded" if candidate_len > baseline_len else "compressed"
-        reasons.append(
-            f"Response length {direction}: baseline {baseline_len} chars vs candidate {candidate_len} chars "
-            f"({delta_pct:.1f}%, block threshold {block_delta:.0f}%)."
-        )
-        codes.append("DRIFT_BLOCK_LENGTH_DELTA")
-        details["length_delta_pct"] = delta_pct
-    elif delta_pct >= warn_delta:
-        direction = "expanded" if candidate_len > baseline_len else "compressed"
-        reasons.append(
-            f"Response length {direction}: baseline {baseline_len} chars vs candidate {candidate_len} chars "
-            f"({delta_pct:.1f}%, threshold {warn_delta:.0f}%)."
-        )
-        codes.append("DRIFT_WARN_LENGTH_DELTA")
-        details["length_delta_pct"] = delta_pct
+    if candidate_len > baseline_len:
+        if delta_pct >= block_expansion:
+            reasons.append(
+                f"Response length expanded: baseline {baseline_len} chars vs candidate {candidate_len} chars "
+                f"({delta_pct:.1f}%, block threshold {block_expansion:.0f}%)."
+            )
+            codes.append("DRIFT_BLOCK_EXPANSION")
+            details["expansion_pct"] = delta_pct
+        elif delta_pct >= warn_expansion:
+            reasons.append(
+                f"Response length expanded: baseline {baseline_len} chars vs candidate {candidate_len} chars "
+                f"({delta_pct:.1f}%, threshold {warn_expansion:.0f}%)."
+            )
+            codes.append("DRIFT_WARN_EXPANSION")
+            details["expansion_pct"] = delta_pct
+    elif candidate_len < baseline_len:
+        if delta_pct >= block_compression:
+            reasons.append(
+                f"Response length compressed: baseline {baseline_len} chars vs candidate {candidate_len} chars "
+                f"({delta_pct:.1f}%, block threshold {block_compression:.0f}%)."
+            )
+            codes.append("DRIFT_BLOCK_COMPRESSION")
+            details["compression_pct"] = delta_pct
+        elif delta_pct >= warn_compression:
+            reasons.append(
+                f"Response length compressed: baseline {baseline_len} chars vs candidate {candidate_len} chars "
+                f"({delta_pct:.1f}%, threshold {warn_compression:.0f}%)."
+            )
+            codes.append("DRIFT_WARN_COMPRESSION")
+            details["compression_pct"] = delta_pct
 
     if short_ratio < warn_short_ratio:
         shrink_pct = (1 - short_ratio) * 100

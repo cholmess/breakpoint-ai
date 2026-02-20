@@ -136,25 +136,43 @@ def _validate_drift_thresholds(config: dict) -> None:
     if not isinstance(drift, dict):
         raise ConfigValidationError("Config key 'drift_policy' must be a JSON object.")
 
-    length_delta = drift.get("warn_length_delta_pct")
-    block_length_delta = drift.get("block_length_delta_pct")
+    warn_expansion = drift.get("warn_expansion_pct")
+    block_expansion = drift.get("block_expansion_pct")
+    warn_compression = drift.get("warn_compression_pct")
+    block_compression = drift.get("block_compression_pct")
     short_ratio = drift.get("warn_short_ratio")
     min_similarity = drift.get("warn_min_similarity")
 
-    if not isinstance(length_delta, (int, float)):
-        raise ConfigValidationError("Config key 'drift_policy.warn_length_delta_pct' must be numeric.")
-    if float(length_delta) < 0:
-        raise ConfigValidationError("Config key 'drift_policy.warn_length_delta_pct' must be >= 0.")
+    if not isinstance(warn_expansion, (int, float)):
+        raise ConfigValidationError("Config key 'drift_policy.warn_expansion_pct' must be numeric.")
+    if float(warn_expansion) < 0:
+        raise ConfigValidationError("Config key 'drift_policy.warn_expansion_pct' must be >= 0.")
 
-    if block_length_delta is None:
-        block_length_delta = length_delta
-    if not isinstance(block_length_delta, (int, float)):
-        raise ConfigValidationError("Config key 'drift_policy.block_length_delta_pct' must be numeric.")
-    if float(block_length_delta) < 0:
-        raise ConfigValidationError("Config key 'drift_policy.block_length_delta_pct' must be >= 0.")
-    if float(block_length_delta) < float(length_delta):
+    if block_expansion is None:
+        block_expansion = warn_expansion
+    if not isinstance(block_expansion, (int, float)):
+        raise ConfigValidationError("Config key 'drift_policy.block_expansion_pct' must be numeric.")
+    if float(block_expansion) < 0:
+        raise ConfigValidationError("Config key 'drift_policy.block_expansion_pct' must be >= 0.")
+    if float(block_expansion) < float(warn_expansion):
         raise ConfigValidationError(
-            "Config key 'drift_policy.block_length_delta_pct' must be >= 'drift_policy.warn_length_delta_pct'."
+            "Config key 'drift_policy.block_expansion_pct' must be >= 'drift_policy.warn_expansion_pct'."
+        )
+
+    if not isinstance(warn_compression, (int, float)):
+        raise ConfigValidationError("Config key 'drift_policy.warn_compression_pct' must be numeric.")
+    if float(warn_compression) < 0:
+        raise ConfigValidationError("Config key 'drift_policy.warn_compression_pct' must be >= 0.")
+
+    if block_compression is None:
+        block_compression = warn_compression
+    if not isinstance(block_compression, (int, float)):
+        raise ConfigValidationError("Config key 'drift_policy.block_compression_pct' must be numeric.")
+    if float(block_compression) < 0:
+        raise ConfigValidationError("Config key 'drift_policy.block_compression_pct' must be >= 0.")
+    if float(block_compression) < float(warn_compression):
+        raise ConfigValidationError(
+            "Config key 'drift_policy.block_compression_pct' must be >= 'drift_policy.warn_compression_pct'."
         )
 
     if not isinstance(short_ratio, (int, float)):

@@ -72,14 +72,14 @@ def test_drift_length_threshold_boundaries_in_lite_defaults():
         candidate={"output": "a" * 135, "cost_usd": 1.0},
     )
     assert warn.status == "WARN"
-    assert "DRIFT_LENGTH_WARN" in warn.reason_codes
+    assert "DRIFT_EXPANSION_WARN" in warn.reason_codes
 
     block = evaluate(
         baseline={"output": "a" * 100, "cost_usd": 1.0},
         candidate={"output": "a" * 170, "cost_usd": 1.0},
     )
     assert block.status == "BLOCK"
-    assert "DRIFT_LENGTH_BLOCK" in block.reason_codes
+    assert "DRIFT_EXPANSION_BLOCK" in block.reason_codes
 
 
 def test_strict_promotes_warn_to_block():
