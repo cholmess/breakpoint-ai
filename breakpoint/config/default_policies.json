@@ -31,6 +31,21 @@
     "semantic_check_enabled": true,
     "similarity_method": "max(token_jaccard,char_3gram_jaccard)"
   },
+  "red_team_policy": {
+    "enabled": true,
+    "categories": {
+      "injection": [
+        "\\bignore previous instructions\\b",
+        "\\bas an ai\\b",
+        "\\bsystem prompt\\b"
+      ],
+      "toxicity": [
+        "\\bswearword(?:s)?\\b",
+        "\\bslur(?:s)?\\b"
+      ],
+      "competitors": []
+    }
+  },
   "latency_policy": {
     "min_baseline_latency_ms": 50,
     "warn_increase_pct": 25,

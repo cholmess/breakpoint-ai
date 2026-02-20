@@ -108,6 +108,7 @@ def _validate_config(config: dict) -> None:
     _validate_policy_thresholds(config, policy="latency_policy")
     _validate_drift_thresholds(config)
     _validate_output_contract_policy(config)
+    _validate_red_team_policy(config)
     _validate_strict_mode(config)
     parse_waivers(config.get("waivers"))
 
@@ -196,6 +197,25 @@ def _validate_output_contract_policy(config: dict) -> None:
         if not isinstance(value, bool):
             raise ConfigValidationError(f"Config key 'output_contract_policy.{key}' must be boolean.")
 
+
+def _validate_red_team_policy(config: dict) -> None:
+    policy = config.get("red_team_policy", {})
+    if not isinstance(policy, dict):
+        raise ConfigValidationError("Config key 'red_team_policy' must be a JSON object.")
+
+    enabled = policy.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise ConfigValidationError("Config key 'red_team_policy.enabled' must be boolean.")
+
+    categories = policy.get("categories", {})
+    if not isinstance(categories, dict):
+        raise ConfigValidationError("Config key 'red_team_policy.categories' must be a JSON object.")
+        
+    for name, patterns in categories.items():
+        if not isinstance(patterns, list):
+            raise ConfigValidationError(f"Config key 'red_team_policy.categories.{name}' must be a list of strings.")
+        if not all(isinstance(pattern, str) for pattern in patterns):
+            raise ConfigValidationError(f"Config key 'red_team_policy.categories.{name}' must be a list of strings.")
 
 def _validate_strict_mode(config: dict) -> None:
     policy = config.get("strict_mode", {})

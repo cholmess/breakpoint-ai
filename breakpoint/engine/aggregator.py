@@ -72,6 +72,13 @@ def _extract_metrics(details: dict) -> dict:
     if isinstance(type_counts, dict):
         metrics["pii_blocked_type_count"] = len(type_counts)
 
+    red_team = details.get("red_team", {})
+    if isinstance(red_team.get("blocked_total"), (int, float)):
+        metrics["red_team_blocked_total"] = int(red_team["blocked_total"])
+    category_counts = red_team.get("blocked_category_counts")
+    if isinstance(category_counts, dict):
+        metrics["red_team_blocked_category_count"] = len(category_counts)
+
     output_contract = details.get("output_contract", {})
     if isinstance(output_contract.get("invalid_json_count"), (int, float)):
         metrics["output_contract_invalid_json_count"] = int(output_contract["invalid_json_count"])

@@ -18,6 +18,8 @@ _METRIC_DISPLAY_ORDER = [
     "short_ratio",
     "pii_blocked_total",
     "pii_blocked_type_count",
+    "red_team_blocked_total",
+    "red_team_blocked_category_count",
     "output_contract_invalid_json_count",
     "output_contract_missing_keys_count",
     "output_contract_type_mismatch_count",
@@ -34,17 +36,20 @@ _METRIC_LABELS = {
     "short_ratio": "Short ratio",
     "pii_blocked_total": "PII blocked total",
     "pii_blocked_type_count": "PII blocked type count",
+    "red_team_blocked_total": "Red Team blocked total",
+    "red_team_blocked_category_count": "Red Team blocked category count",
     "output_contract_invalid_json_count": "Output contract invalid JSON count",
     "output_contract_missing_keys_count": "Output contract missing keys count",
     "output_contract_type_mismatch_count": "Output contract type mismatch count",
     "similarity": "Similarity",
 }
 
-_POLICY_DISPLAY_ORDER = ["pii", "output_contract", "cost", "latency", "drift"]
-# Lite mode only evaluates pii, cost, drift; Full mode evaluates all five.
+_POLICY_DISPLAY_ORDER = ["pii", "red_team", "output_contract", "cost", "latency", "drift"]
+# Lite mode only evaluates pii, cost, drift; Full mode evaluates all six.
 _POLICY_DISPLAY_ORDER_LITE = ["pii", "cost", "drift"]
 _POLICY_LABELS = {
     "pii": "No PII detected",
+    "red_team": "Red Team safety",
     "output_contract": "Response format",
     "cost": "Cost",
     "latency": "Latency",
@@ -462,6 +467,7 @@ def _print_full_mode_explainability(decision) -> None:
     """In Full mode, print what was evaluated and any waivers for explainability."""
     print("Policies evaluated (Full mode):")
     print("  • PII: Block if email, phone, credit card, or SSN detected in candidate output.")
+    print("  • Red Team: Block if configured safety regex patterns (toxicity, injection, etc.) match Candidate output.")
     print("  • Response format: If baseline output is JSON, candidate must be valid JSON and match keys/types.")
     print("  • Cost: WARN/BLOCK on % or $ increase vs baseline (thresholds from config).")
     print("  • Latency: WARN/BLOCK on % or ms increase vs baseline (thresholds from config).")
@@ -509,6 +515,8 @@ def _policy_status_by_reason_code(reason_codes: list[str]) -> dict[str, str]:
 def _policy_from_reason_code(code: str) -> str | None:
     if code.startswith("PII_"):
         return "pii"
+    if code.startswith("RED_TEAM_"):
+        return "red_team"
     if code.startswith("OUTPUT_CONTRACT_"):
         return "output_contract"
     if code.startswith("COST_"):
@@ -650,6 +658,13 @@ def _policy_detail_enhanced(
         if type_counts:
             types = ", ".join([f"{k}({v})" for k, v in sorted(type_counts.items())])
             base_detail += f" [Types: {types}]"
+            
+    if policy == "red_team" and details.get("red_team"):
+        red_team_details = details["red_team"]
+        category_counts = red_team_details.get("blocked_category_counts", {})
+        if category_counts:
+            cats = ", ".join([f"{k}({v})" for k, v in sorted(category_counts.items())])
+            base_detail += f" [Categories: {cats}]"
     
     if policy == "latency" and baseline_data and candidate_data:
         baseline_latency = baseline_data.get("latency_ms")
@@ -666,6 +681,12 @@ def _policy_detail_enhanced(
 def _policy_detail(policy: str, status: str, metrics: dict) -> str:
     if policy == "pii":
         blocked_total = metrics.get("pii_blocked_total")
+        if isinstance(blocked_total, (int, float)) and blocked_total > 0:
+            return f"Detected {int(blocked_total)} match(es)."
+        return "No matches."
+
+    if policy == "red_team":
+        blocked_total = metrics.get("red_team_blocked_total")
         if isinstance(blocked_total, (int, float)) and blocked_total > 0:
             return f"Detected {int(blocked_total)} match(es)."
         return "No matches."

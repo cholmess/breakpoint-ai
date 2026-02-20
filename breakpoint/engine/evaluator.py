@@ -5,6 +5,7 @@ from breakpoint.engine.policies.drift import evaluate_drift_policy
 from breakpoint.engine.policies.latency import evaluate_latency_policy
 from breakpoint.engine.policies.output_contract import evaluate_output_contract_policy
 from breakpoint.engine.policies.pii import evaluate_pii_policy
+from breakpoint.engine.policies.red_team import evaluate_red_team_policy
 from breakpoint.engine.waivers import (
     Waiver,
     apply_waivers_to_policy_results,
@@ -74,6 +75,13 @@ def evaluate(
                 baseline=baseline_record,
                 candidate=candidate_record,
                 config=config.get("output_contract_policy", {}),
+            ),
+        )
+        policy_results.insert(
+            5,
+            evaluate_red_team_policy(
+                candidate=candidate_record,
+                config=config.get("red_team_policy", {}),
             ),
         )
 
