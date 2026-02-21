@@ -238,6 +238,22 @@ Combined input format:
 }
 ```
 
+## Pytest Plugin
+
+Assert LLM output stability in your tests:
+
+```python
+def test_my_agent(breakpoint):
+    response = call_my_llm("Hello")
+    breakpoint.assert_stable(response, candidate_metadata={"cost_usd": 0.002})
+```
+
+Baselines live in `baselines/` next to your test file. To create/update them:
+
+```bash
+BREAKPOINT_UPDATE_BASELINES=1 pytest
+```
+
 ## Python API
 
 ```python

@@ -67,7 +67,20 @@ git add action.yml entrypoint.sh
 git commit -m "Add Marketplace-ready BreakPoint Evaluate action"
 ```
 
-## 5. Directory Layout
+## 5. PyPI Package
+
+The action installs `breakpoint-ai` from PyPI. To publish the package on release:
+
+1. **Add Trusted Publisher** on PyPI: https://pypi.org/manage/project/breakpoint-ai/settings/publishing/
+   - Owner: `cholmess`
+   - Repository: `breakpoint-ai`
+   - Workflow: `publish-pypi.yml`
+
+2. **Release:** Creating a release triggers `.github/workflows/publish-pypi.yml` to build and publish.
+
+3. **First-time PyPI:** Register the project at https://pypi.org if you haven't already.
+
+## 6. Directory Layout
 
 For publishing from this repo, recommended layout:
 
