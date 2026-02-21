@@ -77,13 +77,42 @@ Default policy posture (out of the box, Lite):
 - PII: `BLOCK` on first detection
 - Drift: `WARN` at `+35%`, `BLOCK` at `+70%`
 
-### Copy-Paste GitHub Actions Gate
+### GitHub Action (Marketplace)
 
-Use the template:
-- `examples/ci/github-actions-breakpoint.yml`
+Use the [BreakPoint Evaluate action](https://github.com/marketplace/actions/breakpoint-evaluate) in any workflow:
 
-Copy it to:
-- `.github/workflows/breakpoint-gate.yml`
+```yaml
+- uses: cholmess/breakpoint-ai@v1
+  with:
+    baseline: baseline.json
+    candidate: candidate.json
+    fail_on: warn
+    mode: lite
+```
+
+Pre-merge gate example:
+
+```yaml
+name: BreakPoint Gate
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate candidate
+        run: # ... produce candidate.json from your model
+      - name: BreakPoint Evaluate
+        uses: cholmess/breakpoint-ai@v1
+        with:
+          baseline: baseline.json
+          candidate: candidate.json
+          fail_on: warn
+```
+
+Or copy the template: `examples/ci/github-actions-breakpoint.yml` → `.github/workflows/breakpoint-gate.yml`
 
 What `--fail-on warn` means:
 - Any `WARN` or `BLOCK` fails the CI step.
@@ -235,6 +264,10 @@ print(decision.reasons)
 - `docs/value-metrics.md`
 - `docs/policy-presets.md`
 - `docs/release-gate-audit.md`
+
+## Topics
+
+Add these topics in your repo settings for discoverability: `ai`, `llm`, `evaluation`, `ci`, `quality-gate`, `github-actions`, `breakpoint`.
 
 ## Contact
 

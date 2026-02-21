@@ -1,5 +1,6 @@
 name: 'BreakPoint Evaluate'
-description: 'Evaluate AI outputs against baselines using BreakPoint AI. Prevent bad AI releases before they hit production.'
+description: 'AI output evaluation & LLM baseline comparison. Prevent bad AI releases before production.'
+author: 'Christopher Holmes'
 branding:
   icon: 'shield'
   color: 'red'
@@ -11,20 +12,18 @@ inputs:
   candidate:
     description: 'Path to candidate JSON file'
     required: true
-  fail-on:
-    description: 'Level to fail on (warn or block)'
+  fail_on:
+    description: 'Fail the workflow when result equals this (allow = never fail, warn = fail on WARN or BLOCK, block = fail only on BLOCK)'
     required: false
     default: 'warn'
   mode:
-    description: 'Mode to run in (lite or full)'
+    description: 'Evaluation mode (lite or full). Lite: cost, PII, drift. Full: adds output contract, latency, red team, presets.'
     required: false
     default: 'lite'
-  config:
-    description: 'Path to policy config JSON (full mode only)'
+  extra_args:
+    description: 'Optional extra arguments passed to breakpoint evaluate (e.g. --strict --config policy.json)'
     required: false
-  env:
-    description: 'Environment name (full mode only)'
-    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -33,25 +32,17 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
-    - name: Install BreakPoint AI
+
+    - name: Install BreakPoint
       shell: bash
       run: pip install breakpoint-ai
-      
-    - name: Run Evaluation
+
+    - name: Run BreakPoint Evaluate
       shell: bash
-      run: |
-        CMD="breakpoint evaluate ${{ inputs.baseline }} ${{ inputs.candidate }} --fail-on ${{ inputs.fail-on }} --json"
-        
-        if [ "${{ inputs.mode }}" = "full" ]; then
-          CMD="$CMD --mode full"
-          if [ -n "${{ inputs.config }}" ]; then
-            CMD="$CMD --config ${{ inputs.config }}"
-          fi
-          if [ -n "${{ inputs.env }}" ]; then
-            CMD="$CMD --env ${{ inputs.env }}"
-          fi
-        fi
-        
-        echo "Running: $CMD"
-        $CMD
+      run: ${{ github.action_path }}/entrypoint.sh
+      env:
+        INPUT_BASELINE: ${{ inputs.baseline }}
+        INPUT_CANDIDATE: ${{ inputs.candidate }}
+        INPUT_FAIL_ON: ${{ inputs.fail_on }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra_args }}
