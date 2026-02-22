@@ -1,6 +1,6 @@
 # BreakPoint AI
 
-[![PyPI version](https://badge.fury.io/py/breakpoint-ai.svg)](https://pypi.org/project/breakpoint-ai/)
+[![PyPI version](https://img.shields.io/pypi/v/breakpoint-ai.svg)](https://pypi.org/project/breakpoint-ai/)
 [![Tests](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml/badge.svg)](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
