@@ -68,6 +68,19 @@ Example BLOCK output:
 
 ---
 
+## Try the 30-Second Demo
+
+Want to see BreakPoint in action?
+
+```bash
+cd examples/install-worthy-demo
+./run.sh
+```
+
+This simulates a real regression (cost spike + PII leak) and shows how BreakPoint blocks it before merge.
+
+---
+
 ## Baseline: Treat LLM Output Like a Code Artifact
 
 Start with a known case and save it—here's one way to generate your first baseline:

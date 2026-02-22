@@ -1,0 +1,10 @@
+{
+  "output": "Our platform helps small businesses manage invoices. For support call 555-123-4567.",
+  "metrics": {
+    "tokens": 1500,
+    "latency_ms": 720
+  },
+  "cost_usd": 0.03,
+  "tokens_total": 1500,
+  "latency_ms": 720
+}

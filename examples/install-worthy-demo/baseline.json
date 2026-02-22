@@ -1,0 +1,10 @@
+{
+  "output": "Our platform helps small businesses manage invoices and payments securely.",
+  "metrics": {
+    "tokens": 1000,
+    "latency_ms": 420
+  },
+  "cost_usd": 0.02,
+  "tokens_total": 1000,
+  "latency_ms": 420
+}
