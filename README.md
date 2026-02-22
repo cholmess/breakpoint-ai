@@ -14,6 +14,8 @@
 
 **If you don't:** Cost drift, PII leaks, and format regressions ship unnoticed. Unit tests won't catch these—LLM output isn't deterministic.
 
+**Try an example in 2 minutes:** `breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_cost_model_swap.json` (from repo root).
+
 ---
 
 ## 3-Step Mental Model
@@ -53,13 +55,13 @@ breakpoint evaluate baseline.json candidate.json
 
 Each JSON needs `output` (string). Optional: `cost_usd`, `tokens_in`, `tokens_out`, `model`, `latency_ms`.
 
-Example BLOCK:
+Example BLOCK output:
 
 ```
   Final Decision: BLOCK
 
-  • Cost increased by 68.9% ($0.0450 → $0.0760), exceeding 40% block threshold.
-  • PII: US phone number pattern detected.
+  1. Cost increased by 68.9% ($0.0450 → $0.0760), exceeding 40% block threshold.
+  2. PII: US phone number pattern detected.
 
   Exit: 2
 ```
@@ -68,7 +70,14 @@ Example BLOCK:
 
 ## Baseline: Treat LLM Output Like a Code Artifact
 
-Baselines are approved snapshots. You commit them. You diff against them. When a change is **intentional** and you've reviewed it, promote the candidate to baseline:
+Start with a known case and save it—here's one way to generate your first baseline:
+
+```bash
+# Run your model on a representative input, capture the output
+echo '{"output":"Hello! How can I help?","cost_usd":0.01,"tokens_out":50}' > baseline.json
+```
+
+Commit `baseline.json`. Compare new candidates against it. When a change is **intentional** and you've reviewed it, promote the candidate to baseline:
 
 ```bash
 breakpoint accept baseline.json candidate.json
@@ -214,12 +223,12 @@ print(decision.status, decision.reasons)
 
 ## Docs
 
-- `docs/user-guide.md`
-- `docs/user-guide-full-mode.md`
-- `docs/quickstart-10min.md`
-- `docs/install-worthy-examples.md`
-- `docs/baseline-lifecycle.md`
-- `docs/ci-templates.md`
+| Path | Purpose |
+|------|---------|
+| `docs/quickstart-10min.md` | 10-minute walkthrough |
+| `docs/install-worthy-examples.md` | Four realistic scenarios |
+| `docs/user-guide-full-mode.md` | Config, presets, waivers |
+| `docs/ci-templates.md` | CI wiring |
 
 ---
 
