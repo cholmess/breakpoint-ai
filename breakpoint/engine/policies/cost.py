@@ -39,26 +39,26 @@ def evaluate_cost_policy(
     if (block_delta_usd > 0 and _meets_or_exceeds(delta_usd, block_delta_usd)) or _meets_or_exceeds(
         increase_pct, block_threshold
     ):
+        reason = _format_cost_reason(
+            increase_pct, baseline_cost, candidate_cost, baseline, candidate, block_threshold, "block"
+        )
         return PolicyResult(
             policy="cost",
             status="BLOCK",
-            reasons=[
-                f"Cost increased by {increase_pct:.1f}% (>={block_threshold:.0f}%)."
-                + (f" Absolute delta ${delta_usd:.4f} (>={block_delta_usd:.4f})." if block_delta_usd > 0 else "")
-            ],
+            reasons=[reason],
             codes=["COST_BLOCK_INCREASE"],
             details={"increase_pct": increase_pct, "delta_usd": delta_usd},
         )
     if (warn_delta_usd > 0 and _meets_or_exceeds(delta_usd, warn_delta_usd)) or _meets_or_exceeds(
         increase_pct, warn_threshold
     ):
+        reason = _format_cost_reason(
+            increase_pct, baseline_cost, candidate_cost, baseline, candidate, warn_threshold, "warn"
+        )
         return PolicyResult(
             policy="cost",
             status="WARN",
-            reasons=[
-                f"Cost increased by {increase_pct:.1f}% (>={warn_threshold:.0f}%)."
-                + (f" Absolute delta ${delta_usd:.4f} (>={warn_delta_usd:.4f})." if warn_delta_usd > 0 else "")
-            ],
+            reasons=[reason],
             codes=["COST_WARN_INCREASE"],
             details={"increase_pct": increase_pct, "delta_usd": delta_usd},
         )
@@ -95,3 +95,46 @@ def _resolve_cost(record: dict, pricing: dict) -> float | None:
 
 def _meets_or_exceeds(value: float, threshold: float) -> bool:
     return value + _EPSILON >= threshold
+
+
+def _format_cost_reason(
+    increase_pct: float,
+    baseline_cost: float,
+    candidate_cost: float,
+    baseline: dict,
+    candidate: dict,
+    threshold: float,
+    severity: str,
+) -> str:
+    """Explicit reason: numbers and threshold."""
+    cost_part = f"${baseline_cost:.4f} → ${candidate_cost:.4f}"
+    token_part = _token_comparison(baseline, candidate)
+    suffix = f"exceeding {threshold:.0f}% {severity} threshold"
+    # Prefer tokens when they differ; otherwise use cost
+    if token_part and _tokens_differ(baseline, candidate):
+        return f"Cost increased by {increase_pct:.1f}% ({token_part}), {suffix}."
+    return f"Cost increased by {increase_pct:.1f}% ({cost_part}), {suffix}."
+
+
+def _tokens_differ(baseline: dict, candidate: dict) -> bool:
+    """True when tokens_out or tokens_total differ between baseline and candidate."""
+    b_out, c_out = baseline.get("tokens_out"), candidate.get("tokens_out")
+    if isinstance(b_out, (int, float)) and isinstance(c_out, (int, float)):
+        return int(b_out) != int(c_out)
+    b_total, c_total = baseline.get("tokens_total"), candidate.get("tokens_total")
+    if isinstance(b_total, (int, float)) and isinstance(c_total, (int, float)):
+        return int(b_total) != int(c_total)
+    return False
+
+
+def _token_comparison(baseline: dict, candidate: dict) -> str:
+    """Return '1,000 → 1,380 tokens' when tokens_out or tokens_total available."""
+    b_out = baseline.get("tokens_out")
+    c_out = candidate.get("tokens_out")
+    if isinstance(b_out, (int, float)) and isinstance(c_out, (int, float)):
+        return f"{int(b_out):,} → {int(c_out):,} tokens"
+    b_total = baseline.get("tokens_total")
+    c_total = candidate.get("tokens_total")
+    if isinstance(b_total, (int, float)) and isinstance(c_total, (int, float)):
+        return f"{int(b_total):,} → {int(c_total):,} tokens"
+    return ""

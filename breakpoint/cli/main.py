@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import shutil
 import sys
 
 try:
@@ -62,6 +63,21 @@ _POLICY_LABELS = {
 }
 _SECTION_DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# ANSI colors (respect NO_COLOR)
+def _color(s: str, code: str) -> str:
+    if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
+        return s
+    return f"\033[{code}m{s}\033[0m"
+
+def _green(s: str) -> str:
+    return _color(s, "32")
+
+def _yellow(s: str) -> str:
+    return _color(s, "33")
+
+def _red(s: str) -> str:
+    return _color(s, "31")
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="breakpoint")
@@ -102,6 +118,7 @@ def main() -> int:
     )
     evaluate_parser.add_argument("--env", help="Config environment name (for environments.<name> overrides).")
     evaluate_parser.add_argument("--json", action="store_true", help="Emit JSON decision output.")
+    evaluate_parser.add_argument("--verbose", action="store_true", help="Show full policy results, metrics, and comparison.")
     evaluate_parser.add_argument(
         "--exit-codes",
         action="store_true",
@@ -124,6 +141,10 @@ def main() -> int:
         "--run-id",
         help="Optional run identifier to include in decision metadata (for joining external analytics).",
     )
+
+    accept_parser = subparsers.add_parser("accept", help="Accept candidate as new baseline (when change is intentional).")
+    accept_parser.add_argument("baseline_path", help="Path to baseline JSON file (will be overwritten).")
+    accept_parser.add_argument("candidate_path", help="Path to candidate JSON file.")
 
     config_parser = subparsers.add_parser("config", help="Inspect BreakPoint configuration.")
     config_subparsers = config_parser.add_subparsers(dest="config_command", required=True)
@@ -159,6 +180,8 @@ def main() -> int:
     metrics_summarize_parser.add_argument("--json", action="store_true", help="Emit summary as JSON.")
 
     args = parser.parse_args()
+    if args.command == "accept":
+        return _run_accept(args)
     if args.command == "evaluate":
         return _run_evaluate(args)
     if args.command == "config" and args.config_command == "print":
@@ -261,12 +284,13 @@ def _run_evaluate(args: argparse.Namespace) -> int:
         fail_on=args.fail_on,
     )
     _print_text_decision(
-        decision, 
-        exit_code=exit_code, 
-        mode=args.mode, 
+        decision,
+        exit_code=exit_code,
+        mode=args.mode,
         accepted_risks=list(args.accept_risk),
         baseline_data=baseline_data,
-        candidate_data=candidate_data
+        candidate_data=candidate_data,
+        verbose=getattr(args, "verbose", False),
     )
     return exit_code
 
@@ -290,6 +314,19 @@ def _validate_evaluate_mode_flags(args: argparse.Namespace) -> None:
                 f"{', '.join(full_only_flags)} require --mode full. "
                 "Lite mode allows one-shot CLI overrides via --accept-risk only."
             )
+
+
+def _run_accept(args: argparse.Namespace) -> int:
+    """Copy candidate to baseline path. When change is intentional, run this."""
+    try:
+        candidate = _read_json(args.candidate_path, {})
+        with open(args.baseline_path, "w", encoding="utf-8") as f:
+            json.dump(candidate, f, indent=2)
+        print(f"Baseline updated: {args.baseline_path} ← {args.candidate_path}")
+        return 0
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
 
 def _run_config_print(args: argparse.Namespace) -> int:
@@ -435,13 +472,39 @@ def _result_exit_code(status: str, exit_codes_enabled: bool, fail_on: str | None
 
 
 def _print_text_decision(
-    decision, 
-    exit_code: int, 
-    mode: str, 
+    decision,
+    exit_code: int,
+    mode: str,
     accepted_risks: list[str],
     baseline_data: dict | None = None,
-    candidate_data: dict | None = None
+    candidate_data: dict | None = None,
+    verbose: bool = False,
 ) -> None:
+    status = decision.status.upper()
+    decision_colored = (
+        _green(decision.status) if status == "ALLOW"
+        else _yellow(decision.status) if status == "WARN"
+        else _red(decision.status)
+    )
+
+    if not verbose:
+        # Minimal default: decision, 1–3 reasons, exit code
+        print()
+        print(f"  Final Decision: {decision_colored}")
+        print()
+        if decision.reasons:
+            for r in decision.reasons[:3]:
+                print(f"  • {r}")
+            if len(decision.reasons) > 3:
+                print(f"  • … +{len(decision.reasons) - 3} more")
+        else:
+            print("  No risky deltas detected.")
+        print()
+        print(f"  Exit: {exit_code}")
+        print()
+        return
+
+    # Full verbose output
     print(_SECTION_DIVIDER)
     print("BreakPoint Evaluation")
     print(_SECTION_DIVIDER)
@@ -454,36 +517,29 @@ def _print_text_decision(
         accepted = ", ".join(sorted(set(accepted_risks)))
         print(f"Accepted Risk Override (one-shot): {accepted}")
         print()
-    
-    # Input Comparison Section
+
     if baseline_data and candidate_data:
         print("Input Comparison:")
         _print_comparison(baseline_data, candidate_data)
         print()
-    
-    print(f"Final Decision: {decision.status}")
+
+    print(f"Final Decision: {decision_colored}")
     print()
     print("Policy Results:")
     policy_statuses = _policy_status_by_reason_code(decision.reason_codes)
     policies_to_show = _POLICY_DISPLAY_ORDER if mode == "full" else _POLICY_DISPLAY_ORDER_LITE
     for policy in policies_to_show:
-        status = policy_statuses.get(policy, "ALLOW")
+        pol_status = policy_statuses.get(policy, "ALLOW")
         detail = _policy_detail_enhanced(
-            policy, 
-            status, 
-            decision.metrics, 
-            decision.details,
-            baseline_data,
-            candidate_data
+            policy, pol_status, decision.metrics, decision.details,
+            baseline_data, candidate_data,
         )
-        # Add color indicator and threshold info inline
-        color_indicator = _get_color_indicator(status)
-        threshold_info = _get_threshold_info(policy, status, decision.metrics, baseline_data, candidate_data)
+        color_indicator = _get_color_indicator(pol_status)
+        threshold_info = _get_threshold_info(policy, pol_status, decision.metrics, baseline_data, candidate_data)
         detail_with_threshold = f"{detail}{threshold_info}" if threshold_info else detail
-        print(f"{color_indicator} {_status_symbol(status)} {_policy_label(policy)}: {detail_with_threshold}")
+        print(f"{color_indicator} {_status_symbol(pol_status)} {_policy_label(policy)}: {detail_with_threshold}")
     print()
-    
-    # Detailed Metrics Section
+
     if decision.metrics:
         print("Detailed Metrics:")
         for key in _METRIC_DISPLAY_ORDER:
@@ -493,34 +549,19 @@ def _print_text_decision(
                 formatted = _format_metric_value(key, float(value))
                 print(f"  {label}: {formatted}")
         print()
-    
+
     print("Summary:")
     if decision.reasons:
-        if decision.status.upper() == "BLOCK":
-            block_reasons = _reasons_with_severity(decision.reasons, decision.reason_codes, "BLOCK")
-            if block_reasons:
-                for reason in block_reasons:
-                    print(f"- {reason}")
-                non_block_count = len(decision.reasons) - len(block_reasons)
-                if non_block_count > 0:
-                    print(f"{non_block_count} additional non-blocking signal(s) detected.")
-            else:
-                print(decision.reasons[0])
-                if len(decision.reasons) > 1:
-                    print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
-        else:
-            print(decision.reasons[0])
-            if len(decision.reasons) > 1:
-                print(f"{len(decision.reasons) - 1} additional signal(s) detected.")
+        for r in decision.reasons:
+            print(f"  • {r}")
     else:
-        print("No risky deltas detected against configured policies.")
+        print("  No risky deltas detected against configured policies.")
     print()
-    
-    # Reason Codes Section
+
     if decision.reason_codes:
         print("Reason Codes:")
         for code in decision.reason_codes:
-            print(f"  - {code}")
+            print(f"  • {code}")
         print()
 
     print(f"Recommended action: {_recommended_action(decision.status)}")

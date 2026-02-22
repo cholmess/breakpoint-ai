@@ -34,7 +34,7 @@ Detailed Metrics:
   Similarity: 1.000000
 
 Summary:
-No risky deltas detected against configured policies.
+  No risky deltas detected against configured policies.
 
 Recommended action: Safe to ship.
 

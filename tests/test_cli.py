@@ -70,6 +70,7 @@ def test_cli_strict_blocks(tmp_path):
             str(baseline_path),
             str(candidate_path),
             "--strict",
+            "--verbose",
         ],
         check=False,
         capture_output=True,
@@ -103,6 +104,7 @@ def test_cli_text_output_has_deterministic_summary_order(tmp_path):
             "evaluate",
             str(baseline_path),
             str(candidate_path),
+            "--verbose",
         ],
         check=False,
         capture_output=True,
@@ -132,6 +134,7 @@ def test_cli_text_output_matches_allow_golden():
         "examples/quickstart/candidate_allow.json",
         "--mode",
         "full",
+        "--verbose",
     )
     assert result.returncode == 0
     assert result.stdout == _read_golden("allow.txt")
@@ -143,6 +146,7 @@ def test_cli_text_output_matches_warn_golden():
         "examples/quickstart/candidate_warn.json",
         "--mode",
         "full",
+        "--verbose",
     )
     assert result.returncode == 0
     assert result.stdout == _read_golden("warn.txt")
@@ -154,6 +158,7 @@ def test_cli_text_output_matches_block_golden():
         "examples/install_worthy/candidate_format_regression.json",
         "--mode",
         "full",
+        "--verbose",
     )
     assert result.returncode == 0
     assert result.stdout == _read_golden("block.txt")
@@ -179,6 +184,7 @@ def test_cli_empty_candidate_marks_drift_as_block(tmp_path):
             "evaluate",
             str(baseline_path),
             str(candidate_path),
+            "--verbose",
         ],
         check=False,
         capture_output=True,
@@ -196,13 +202,14 @@ def test_cli_block_summary_lists_all_blocking_reasons():
         "examples/quickstart/candidate_block.json",
         "--mode",
         "full",
+        "--verbose",
     )
 
     assert result.returncode == 0
-    assert "- Cost increased by 40.0% (>=40%)." in result.stdout
-    assert "- Latency increased by 70.0% (>60%)." in result.stdout
-    assert "- PII detected: EMAIL(1). Total matches: 1." in result.stdout
-    assert "1 additional non-blocking signal(s) detected." in result.stdout
+    assert "Final Decision: BLOCK" in result.stdout
+    assert "Cost increased by 40.0%" in result.stdout
+    assert "$1.0000 → $1.4000" in result.stdout
+    assert "PII detected: EMAIL(1)" in result.stdout
 
 
 def test_cli_decision_header_by_status():
@@ -243,6 +250,7 @@ def test_cli_text_output_shows_pii_counts(tmp_path):
             "evaluate",
             str(baseline_path),
             str(candidate_path),
+            "--verbose",
         ],
         check=False,
         capture_output=True,
@@ -451,6 +459,32 @@ def test_cli_config_presets_lists_names():
     assert {"chatbot", "support", "extraction"}.issubset(names)
 
 
+def test_cli_accept_updates_baseline(tmp_path):
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(json.dumps({"output": "old"}), encoding="utf-8")
+    candidate_path.write_text(json.dumps({"output": "new", "cost_usd": 0.05}), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "breakpoint.cli.main",
+            "accept",
+            str(baseline_path),
+            str(candidate_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "Baseline updated" in result.stdout
+    updated = json.loads(baseline_path.read_text(encoding="utf-8"))
+    assert updated["output"] == "new"
+    assert updated["cost_usd"] == 0.05
+
+
 def test_cli_evaluate_with_preset_works(tmp_path):
     baseline_path = tmp_path / "baseline.json"
     candidate_path = tmp_path / "candidate.json"
@@ -576,6 +610,7 @@ def test_cli_accept_risk_cost_is_one_shot_lite_override(tmp_path):
             str(candidate_path),
             "--accept-risk",
             "cost",
+            "--verbose",
         ],
         check=False,
         capture_output=True,

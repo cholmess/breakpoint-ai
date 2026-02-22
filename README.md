@@ -4,31 +4,45 @@
 [![Tests](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml/badge.svg)](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**Local-first CI gate for LLM output changes.**
+**BreakPoint blocks risky LLM changes before they ship.**
 
-Changing prompts or models can introduce subtle regressions: cost spikes, PII leaks, format drift, or empty outputs. BreakPoint compares a known-good baseline artifact to a candidate output and returns one of three decisions: **ALLOW**, **WARN**, or **BLOCK**. It runs entirely locally—no SaaS, no telemetry, no API keys.
+**Problem:** You change a prompt or swap a model. Output looks fine. But cost jumps 38%, a phone number slips in, or the format breaks your parser. You ship it. Users and budgets get hurt.
 
-## What BreakPoint Solves
+**Who it's for:** Teams shipping LLM features to production, merging prompt or model changes via PR, or running cost-sensitive systems.
 
-Traditional CI assumes deterministic behavior. LLM output is not deterministic. BreakPoint answers the question: *Is this change acceptable to ship?* You store a baseline (approved output) and compare new candidates against it before merging or deploying.
+**When to use it:** Before every deploy. Gate PRs. Catch regressions before they reach users.
+
+**If you don't:** Cost drift, PII leaks, and format regressions ship unnoticed. Unit tests won't catch these—LLM output isn't deterministic.
+
+---
+
+## 3-Step Mental Model
+
+```
+Step 1: Capture baseline   →  Approved output artifact (store in repo)
+Step 2: Generate candidate →  New output from your changed prompt/model
+Step 3: Gate in CI         →  breakpoint evaluate baseline.json candidate.json
+```
+
+```
+Baseline  ──→  Candidate  ──→  BreakPoint  ──→  ALLOW / WARN / BLOCK  ──→  CI
+```
+
+---
 
 ## Lite Mode (Zero Config)
 
-Out of the box, BreakPoint applies these checks:
+Out of the box, no config needed:
 
 - **Cost:** WARN at +20%, BLOCK at +40%
-- **PII:** Immediate BLOCK on email, phone, credit card (Luhn), SSN
+- **PII:** BLOCK on email, phone, credit card (Luhn), SSN
 - **Drift:** WARN at +35% length delta, BLOCK at +70%, BLOCK on empty output
 
-Exit codes:
+Exit codes: `0` = ALLOW, `1` = WARN, `2` = BLOCK.
 
-| Code | Decision |
-|------|----------|
-| 0 | ALLOW |
-| 1 | WARN |
-| 2 | BLOCK |
+Advanced (config, presets, waivers): `--mode full` → `docs/user-guide-full-mode.md`.
 
-For config-driven policies, output contract, latency checks, presets, or waivers, use `--mode full` (see `docs/user-guide-full-mode.md`).
+---
 
 ## 60-Second Quickstart
 
@@ -37,109 +51,131 @@ pip install breakpoint-ai
 breakpoint evaluate baseline.json candidate.json
 ```
 
-Each JSON needs at least an `output` field (string). Optional: `cost_usd`, `tokens_in`, `tokens_out`, `model`, `latency_ms`.
+Each JSON needs `output` (string). Optional: `cost_usd`, `tokens_in`, `tokens_out`, `model`, `latency_ms`.
 
-Example BLOCK output:
+Example BLOCK:
 
-```text
-Final Decision: BLOCK
-
-Policy Results:
-  ✗ Cost: Delta +68.89%. ($0.0450 → $0.0760)
-  ✗ PII: US phone number pattern detected
-
-Reason Codes: COST_INCREASE_BLOCK, PII_PHONE_BLOCK
 ```
+  Final Decision: BLOCK
+
+  • Cost increased by 68.9% ($0.0450 → $0.0760), exceeding 40% block threshold.
+  • PII: US phone number pattern detected.
+
+  Exit: 2
+```
+
+---
+
+## Baseline: Treat LLM Output Like a Code Artifact
+
+Baselines are approved snapshots. You commit them. You diff against them. When a change is **intentional** and you've reviewed it, promote the candidate to baseline:
+
+```bash
+breakpoint accept baseline.json candidate.json
+```
+
+CI flow: **Fails** → Human reviews → **Accept baseline** (or fix) → Merge.
+
+---
 
 ## CI Integration
 
-Minimal GitHub Actions workflow:
+Run the gate directly—no marketplace action required:
 
-```yaml
-name: BreakPoint Gate
-on:
-  pull_request:
-    branches: [main]
-jobs:
-  evaluate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate candidate
-        run: # ... produce candidate.json from your model
-      - name: BreakPoint Evaluate
-        uses: cholmess/breakpoint-ai@v1
-        with:
-          baseline: baseline.json
-          candidate: candidate.json
-          fail_on: warn
+```bash
+breakpoint evaluate baseline.json candidate.json --fail-on warn
 ```
 
-`--fail-on warn` fails the CI step on WARN or BLOCK. Use `fail_on: block` to fail only on BLOCK. Template: `examples/ci/github-actions-breakpoint.yml`.
+`--fail-on warn` fails CI on WARN or BLOCK. Use `--fail-on block` to fail only on BLOCK.
 
-## When To Use BreakPoint
+Minimal GitHub Actions:
 
-- Shipping LLM features to production
-- Merging prompt or model changes via PR
-- Cost-sensitive systems
+```yaml
+- uses: actions/checkout@v4
+- name: Generate candidate
+  run: # ... produce candidate.json
+- name: BreakPoint Gate
+  run: breakpoint evaluate baseline.json candidate.json --fail-on warn
+```
 
-## When It May Not Be Necessary
+Or use the [BreakPoint Evaluate action](https://github.com/marketplace/actions/breakpoint-evaluate).
 
-- One-off experiments
-- Hobby scripts
-- Non-production workflows
+---
 
-## Why Local-First?
+## Why Not Just Unit Tests?
 
-Most AI observability tools require sending prompts and outputs to SaaS. BreakPoint runs entirely on your machine. Artifacts stay in your repo. No network calls for evaluation.
+Unit tests assume deterministic behavior. LLM output is not. BreakPoint catches what tests miss:
+
+- Cost drift (same output, higher token bill)
+- Subtle regressions (format change, dropped keys)
+- PII leaks (phone, email, credit card)
+
+---
+
+## Real Story
+
+"We swapped GPT-4 to GPT-4.1. Output looked identical. Cost rose 38%. BreakPoint blocked it before deploy."
+
+---
 
 ## Try in 60 Seconds – FastAPI Demo
 
-Watch BreakPoint catch a +68% token cost regression before it hits production:
-
 ![BreakPoint catching cost regression in FastAPI LLM demo](docs/demo-fastapi.gif)
-
-Fork-and-play with pre-baked artifacts. No API keys required.
 
 ```bash
 git clone https://github.com/cholmess/breakpoint-ai
 cd breakpoint-ai/examples/fastapi-llm-demo
 make install
-make good        # Should PASS
-make bad-tokens  # Should BLOCK
+make good        # PASS
+make bad-tokens  # BLOCK
 ```
 
-## Four Realistic Examples
+---
+
+## When To Use / When Not
+
+**Use:** Production LLM features, PR merges, cost-sensitive systems.
+
+**Skip:** One-off experiments, hobby scripts, non-production.
+
+---
+
+## Why Local-First?
+
+Most tools send prompts and outputs to SaaS. BreakPoint runs on your machine. Artifacts stay in your repo. No network calls for evaluation.
+
+---
+
+## Four Examples
 
 ```bash
-# Baseline for all: examples/install_worthy/baseline.json
-
-breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_cost_model_swap.json    # BLOCK
-breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_format_regression.json # BLOCK
-breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_pii_verbosity.json      # BLOCK
-breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_killer_tradeoff.json   # BLOCK
+breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_cost_model_swap.json
+breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_format_regression.json
+breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_pii_verbosity.json
+breakpoint evaluate examples/install_worthy/baseline.json examples/install_worthy/candidate_killer_tradeoff.json
 ```
 
 Details: `docs/install-worthy-examples.md`.
+
+---
 
 ## CLI
 
 ```bash
 breakpoint evaluate baseline.json candidate.json
-breakpoint evaluate payload.json                    # combined JSON with baseline + candidate
-breakpoint evaluate baseline.json candidate.json --json --fail-on warn
+breakpoint evaluate payload.json                    # combined {baseline, candidate}
+breakpoint accept baseline.json candidate.json     # promote candidate to baseline
+breakpoint evaluate ... --verbose                   # full policy output
+breakpoint evaluate ... --json --fail-on warn       # CI-friendly
 ```
+
+---
 
 ## Input Schema
 
-Each JSON object must have at least `output` (string). Optional: `cost_usd`, `model`, `tokens_total`, `tokens_in`, `tokens_out`, `latency_ms`. Combined format:
+`output` (string) required. Optional: `cost_usd`, `tokens_in`, `tokens_out`, `model`, `latency_ms`. Combined: `{"baseline": {...}, "candidate": {...}}`.
 
-```json
-{
-  "baseline": { "output": "..." },
-  "candidate": { "output": "..." }
-}
-```
+---
 
 ## Pytest Plugin
 
@@ -149,7 +185,9 @@ def test_my_agent(breakpoint):
     breakpoint.assert_stable(response, candidate_metadata={"cost_usd": 0.002})
 ```
 
-Baselines in `baselines/` next to the test file. Update with `BREAKPOINT_UPDATE_BASELINES=1 pytest`.
+Update baselines: `BREAKPOINT_UPDATE_BASELINES=1 pytest`.
+
+---
 
 ## Python API
 
@@ -164,13 +202,17 @@ decision = evaluate(
 print(decision.status, decision.reasons)
 ```
 
+---
+
 ## Troubleshooting
 
-- `ModuleNotFoundError: breakpoint`: `pip install breakpoint-ai`
-- File not found: Check paths; files must exist.
-- JSON validation: Ensure at least `output` (string) in each object.
+- `ModuleNotFoundError: breakpoint` → `pip install breakpoint-ai`
+- File not found → Check paths.
+- JSON validation → Ensure `output` (string) in each object.
 
-## Additional Docs
+---
+
+## Docs
 
 - `docs/user-guide.md`
 - `docs/user-guide-full-mode.md`
@@ -178,14 +220,6 @@ print(decision.status, decision.reasons)
 - `docs/install-worthy-examples.md`
 - `docs/baseline-lifecycle.md`
 - `docs/ci-templates.md`
-- `docs/value-metrics.md`
-- `docs/policy-presets.md`
-- `docs/release-gate-audit.md`
-- `docs/terminal-output-lite-vs-full.md`
-
-## Topics
-
-For discoverability: `ai`, `llm`, `evaluation`, `ci`, `quality-gate`, `github-actions`, `breakpoint`, `llmops`, `ai-safety`, `regression-testing`, `mlops`, `guardrails`.
 
 ---
 
@@ -194,6 +228,6 @@ For discoverability: `ai`, `llm`, `evaluation`, `ci`, `quality-gate`, `github-ac
 BreakPoint is maintained by Christopher Holmes Silva.
 
 - X: [https://x.com/cholmess](https://x.com/cholmess)
-- LinkedIn: [https://linkedin.com/in/christopher-holmes-silva](https://www.linkedin.com/in/cholmess/)
+- LinkedIn: [https://linkedin.com/in/cholmess](https://linkedin.com/in/cholmess)
 
-Feedback and real-world usage stories are welcome—[open an issue](https://github.com/cholmess/breakpoint-ai/issues) or email [c.holmes.silva@gmail.com](mailto:c.holmes.silva@gmail.com).
+Feedback and real-world usage stories welcome—[open an issue](https://github.com/cholmess/breakpoint-ai/issues) or [c.holmes.silva@gmail.com](mailto:c.holmes.silva@gmail.com).

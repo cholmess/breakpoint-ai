@@ -39,15 +39,16 @@ Detailed Metrics:
   Similarity: 0.067164
 
 Summary:
-- Output contract break: candidate output is not valid JSON.
-- Response length compressed: baseline 140 chars vs candidate 38 chars (72.9%, block threshold 70%).
-2 additional non-blocking signal(s) detected.
+  • Output contract break: candidate output is not valid JSON.
+  • Response length compressed: baseline 140 chars vs candidate 38 chars (72.9%, block threshold 70%).
+  • Candidate likely dropped detail: 72.9% shorter than baseline (38/140 chars, ratio 0.27, threshold 0.30).
+  • Response content overlap is low (similarity 0.07, threshold 0.10). Missing baseline terms: ticket_summary, cannot, access.
 
 Reason Codes:
-  - OUTPUT_CONTRACT_INVALID_JSON_BLOCK
-  - DRIFT_COMPRESSION_BLOCK
-  - DRIFT_TOO_SHORT_WARN
-  - DRIFT_SIMILARITY_WARN
+  • OUTPUT_CONTRACT_INVALID_JSON_BLOCK
+  • DRIFT_COMPRESSION_BLOCK
+  • DRIFT_TOO_SHORT_WARN
+  • DRIFT_SIMILARITY_WARN
 
 Recommended action: Stop deploy and investigate.
 

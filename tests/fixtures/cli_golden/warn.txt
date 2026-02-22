@@ -37,13 +37,14 @@ Detailed Metrics:
   Similarity: 0.400000
 
 Summary:
-Cost increased by 25.0% (>=20%).
-2 additional signal(s) detected.
+  • Cost increased by 25.0% ($1.0000 → $1.2500), exceeding 20% warn threshold.
+  • Latency increased by 35.0% (>25%).
+  • Response length expanded: baseline 46 chars vs candidate 70 chars (52.2%, threshold 35%).
 
 Reason Codes:
-  - COST_INCREASE_WARN
-  - LATENCY_INCREASE_WARN
-  - DRIFT_EXPANSION_WARN
+  • COST_INCREASE_WARN
+  • LATENCY_INCREASE_WARN
+  • DRIFT_EXPANSION_WARN
 
 Recommended action: Ship with review.
 
