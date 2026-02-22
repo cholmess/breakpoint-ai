@@ -1,6 +1,6 @@
 # BreakPoint AI
 
-[![PyPI](https://img.shields.io/pypi/v/breakpoint-ai?cache=bust)](https://pypi.org/project/breakpoint-ai/)
+[![PyPI version](https://badge.fury.io/py/breakpoint-ai.svg)](https://pypi.org/project/breakpoint-ai/)
 [![Tests](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml/badge.svg)](https://github.com/cholmess/breakpoint-ai/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -151,6 +151,24 @@ What you should see:
 - Scenario B: `BLOCK` (format/contract regression)
 - Scenario C: `BLOCK` (PII + verbosity drift)
 - Scenario D: `BLOCK` (small prompt change -> cost blowup)
+
+## Try in 60 Seconds – FastAPI Demo
+
+Watch BreakPoint catch a +68% token cost regression before it hits production:
+
+![BreakPoint catching cost regression in FastAPI LLM demo](docs/demo-fastapi.gif)
+
+Fork-and-play with pre-baked artifacts. No API keys required.
+
+```bash
+git clone https://github.com/cholmess/breakpoint-ai
+cd breakpoint-ai/examples/fastapi-llm-demo
+make install
+make good        # Should PASS
+make bad-tokens  # Should BLOCK — see why!
+```
+
+**Star if this would save you from a surprise bill.** Found a bug or missing check? [Open an issue](https://github.com/cholmess/breakpoint-ai/issues)!
 
 ## Four Realistic Examples
 
@@ -305,7 +323,7 @@ print(decision.reasons)
 
 ## Topics
 
-Add these topics in your repo settings for discoverability: `ai`, `llm`, `evaluation`, `ci`, `quality-gate`, `github-actions`, `breakpoint`.
+Add these topics in your repo settings for discoverability: `ai`, `llm`, `evaluation`, `ci`, `quality-gate`, `github-actions`, `breakpoint`, `llmops`, `ai-safety`, `regression-testing`, `mlops`, `guardrails`.
 
 ## Contact
 
